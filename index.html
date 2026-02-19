@@ -6,7 +6,6 @@
     <title>Animated Class Dashboard</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
-    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <script>
@@ -48,7 +47,28 @@
             <p class="text-gray-500">Manage your schedule with style</p>
         </div>
 
-        <div class="bg-white/80 backdrop-blur-md shadow-xl rounded-2xl p-6 md:p-8 animate-fade-in-down transition-all duration-300 hover:shadow-2xl">
+        <div id="setupView" class="bg-white/80 backdrop-blur-md shadow-xl rounded-2xl p-6 md:p-10 animate-fade-in-down max-w-md mx-auto text-center">
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">Welcome!</h2>
+            <p class="text-gray-500 mb-6">Let's set up your course schedule.</p>
+            
+            <label class="block text-sm font-semibold text-gray-600 mb-2">How many courses will you take?</label>
+            <input type="number" id="courseLimit" min="1" placeholder="e.g., 2" 
+                class="w-full text-center px-4 py-3 rounded-xl border border-gray-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-200 transition-all duration-300 outline-none mb-6 text-lg font-bold">
+            
+            <button onclick="startCourseEntry()" 
+                class="w-full bg-gradient-to-r from-purple-500 to-indigo-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:shadow-purple-500/50 transform hover:-translate-y-1 active:scale-95 transition-all duration-300">
+                Start Adding Courses ✦
+            </button>
+        </div>
+
+        <div id="formView" class="hidden bg-white/80 backdrop-blur-md shadow-xl rounded-2xl p-6 md:p-8 animate-fade-in-down transition-all duration-300">
+            <div class="flex justify-between items-center mb-6 border-b pb-4">
+                <h2 class="text-xl font-bold text-gray-800">Add Course Information</h2>
+                <span id="progressIndicator" class="bg-purple-100 text-purple-700 py-1 px-4 rounded-full text-sm font-bold shadow-sm">
+                    0 / 0
+                </span>
+            </div>
+
             <form id="scheduleForm" class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 
                 <div class="group">
@@ -58,8 +78,8 @@
                 </div>
 
                 <div class="group">
-                    <label class="block text-sm font-semibold text-gray-600 mb-1 group-focus-within:text-purple-500 transition-colors">Date (DD-MM)</label>
-                    <input type="text" id="date" placeholder="e.g., 25-10" required pattern="\d{2}-\d{2}" title="Format: DD-MM"
+                    <label class="block text-sm font-semibold text-gray-600 mb-1 group-focus-within:text-purple-500 transition-colors">Date (DD-MMM)</label>
+                    <input type="text" id="date" placeholder="e.g., 25-Oct" required pattern="\d{1,2}-[a-zA-Z]{3}" title="Format: DD-MMM (e.g., 25-Oct)"
                         class="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-200 transition-all duration-300 outline-none transform focus:-translate-y-1">
                 </div>
 
@@ -82,60 +102,88 @@
                 </div>
 
                 <div class="flex items-end md:col-span-1">
-                    <button type="submit" 
-                        class="w-full bg-gradient-to-r from-purple-500 to-indigo-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:shadow-purple-500/50 transform hover:-translate-y-1 hover:scale-[1.02] active:scale-95 transition-all duration-300">
-                        Add to Dashboard ✦
+                    <button type="submit" title="Add Course"
+                        class="w-full bg-gradient-to-r from-purple-500 to-indigo-500 text-white font-bold py-2 px-6 rounded-xl shadow-lg hover:shadow-purple-500/50 transform hover:-translate-y-1 hover:scale-[1.02] active:scale-95 transition-all duration-300 flex justify-center items-center text-3xl pb-3">
+                        +
                     </button>
                 </div>
             </form>
         </div>
 
-        <div class="flex justify-end animate-fade-in-down" style="animation-delay: 0.2s;">
-            <button onclick="downloadPDF()" 
-                class="bg-gray-800 text-white font-semibold py-2 px-6 rounded-full shadow-md hover:bg-black transform hover:-translate-y-1 active:scale-95 transition-all duration-300 flex items-center gap-2">
-                <svg class="w-5 h-5 animate-bounce-slight" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                Download PDF
-            </button>
-        </div>
-
-        <div id="pdf-container" class="bg-white shadow-xl rounded-2xl p-6 md:p-8 min-h-[300px]">
-            <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b pb-2">Your Schedule</h2>
-            
-            <div class="hidden md:grid grid-cols-5 gap-4 text-sm font-bold text-gray-500 uppercase tracking-wider mb-4 px-4">
-                <div>Day</div>
-                <div>Date</div>
-                <div>Time</div>
-                <div>Course</div>
-                <div>Group</div>
+        <div id="dashboardView" class="hidden space-y-8">
+            <div class="flex justify-end animate-fade-in-down" style="animation-delay: 0.2s;">
+                <button onclick="downloadPDF()" 
+                    class="bg-gray-800 text-white font-semibold py-2 px-6 rounded-full shadow-md hover:bg-black transform hover:-translate-y-1 active:scale-95 transition-all duration-300 flex items-center gap-2">
+                    <svg class="w-5 h-5 animate-bounce-slight" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    Download PDF
+                </button>
             </div>
 
-            <div id="dashboardList" class="space-y-3">
+            <div id="pdf-container" class="bg-white shadow-xl rounded-2xl p-6 md:p-8 min-h-[300px]">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b pb-2">Your Schedule</h2>
+                
+                <div class="hidden md:grid grid-cols-5 gap-4 text-sm font-bold text-gray-500 uppercase tracking-wider mb-4 px-4">
+                    <div>Day</div>
+                    <div>Date</div>
+                    <div>Time</div>
+                    <div>Course</div>
+                    <div>Group</div>
                 </div>
-            
-            <div id="emptyState" class="text-center py-10 text-gray-400">
-                <p>No classes added yet. Fill out the form above!</p>
+
+                <div id="dashboardList" class="space-y-3">
+                </div>
+                
+                <div id="emptyState" class="text-center py-10 text-gray-400">
+                    <p>No classes added yet.</p>
+                </div>
             </div>
         </div>
 
     </div>
 
     <script>
-        // 1. Format 24hr time to AM/PM easily
+        // State variables for our new multi-step flow
+        let targetCourseCount = 0;
+        let tempCourses = [];
+
+        // 1. Setup view logic
+        function startCourseEntry() {
+            const limitInput = document.getElementById('courseLimit').value;
+            if (!limitInput || limitInput < 1) {
+                alert("Please enter a valid number of courses.");
+                return;
+            }
+            
+            targetCourseCount = parseInt(limitInput);
+            tempCourses = [];
+            
+            // Switch from Setup View to Form View
+            document.getElementById('setupView').classList.add('hidden');
+            document.getElementById('formView').classList.remove('hidden');
+            
+            updateProgress();
+        }
+
+        // Update the progress bubble visually
+        function updateProgress() {
+            document.getElementById('progressIndicator').innerText = `Added: ${tempCourses.length} / ${targetCourseCount}`;
+        }
+
+        // 2. Format 24hr time to AM/PM easily
         function formatAMPM(timeStr) {
             let [hours, minutes] = timeStr.split(':');
             let ampm = hours >= 12 ? 'PM' : 'AM';
             hours = hours % 12;
-            hours = hours ? hours : 12; // the hour '0' should be '12'
+            hours = hours ? hours : 12; 
             return `${hours}:${minutes} ${ampm}`;
         }
 
-        // 2. Set up IndexedDB
+        // 3. Set up IndexedDB
         let db;
         const request = indexedDB.open("ScheduleDashboardDB", 1);
 
         request.onupgradeneeded = function(event) {
             db = event.target.result;
-            // Create an object store to hold our data
             if (!db.objectStoreNames.contains("schedules")) {
                 db.createObjectStore("schedules", { keyPath: "id", autoIncrement: true });
             }
@@ -143,37 +191,65 @@
 
         request.onsuccess = function(event) {
             db = event.target.result;
-            loadDashboard(); // Load data when DB is ready
         };
 
         request.onerror = function(event) {
             console.error("IndexedDB Error: ", event.target.errorCode);
         };
 
-        // 3. Handle Form Submit
+        // 4. Handle Form Submit (now stores temporarily until limit is reached)
         document.getElementById('scheduleForm').addEventListener('submit', function(e) {
             e.preventDefault();
 
+            // Format date to strictly be DD-MMM (e.g. '25-Oct') regardless of how user capitalized it
+            let rawDate = document.getElementById('date').value;
+            let dateParts = rawDate.split('-');
+            let formattedDate = dateParts[0] + '-' + dateParts[1].charAt(0).toUpperCase() + dateParts[1].slice(1).toLowerCase();
+
             const newItem = {
                 day: document.getElementById('day').value,
-                date: document.getElementById('date').value,
+                date: formattedDate,
                 time: formatAMPM(document.getElementById('hour').value),
                 course: document.getElementById('course').value,
                 group: document.getElementById('groupName').value
             };
 
+            // Push to temporary array and clear form
+            tempCourses.push(newItem);
+            document.getElementById('scheduleForm').reset();
+            updateProgress();
+
+            // If we reached the user's limit, save all to DB and show dashboard
+            if (tempCourses.length >= targetCourseCount) {
+                saveAllAndShowDashboard();
+            }
+        });
+
+        // 5. Save loop logic
+        function saveAllAndShowDashboard() {
             const transaction = db.transaction(["schedules"], "readwrite");
             const store = transaction.objectStore("schedules");
             
-            const addRequest = store.add(newItem);
+            let addedCount = 0;
 
-            addRequest.onsuccess = function() {
-                document.getElementById('scheduleForm').reset();
-                loadDashboard(); // Refresh the list
-            };
-        });
+            tempCourses.forEach(item => {
+                const addRequest = store.add(item);
+                addRequest.onsuccess = function() {
+                    addedCount++;
+                    // Only load the dashboard once the final item finishes saving
+                    if (addedCount === tempCourses.length) {
+                        document.getElementById('formView').classList.add('hidden');
+                        document.getElementById('dashboardView').classList.remove('hidden');
+                        loadDashboard();
+                    }
+                };
+            });
+            
+            // Clear temporary cache
+            tempCourses = [];
+        }
 
-        // 4. Load Data & Render Rows
+        // 6. Load Data & Render Rows
         function loadDashboard() {
             const listContainer = document.getElementById('dashboardList');
             const emptyState = document.getElementById('emptyState');
@@ -191,9 +267,8 @@
                 } else {
                     emptyState.style.display = 'none';
                     
-                    // Render each item with an animation delay based on its index
                     data.forEach((item, index) => {
-                        const delay = index * 0.1; // Staggered animation
+                        const delay = index * 0.1; 
                         
                         const row = document.createElement('div');
                         row.className = `animate-slide-up bg-gray-50 hover:bg-purple-50 border border-gray-100 rounded-xl p-4 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-md`;
@@ -214,26 +289,23 @@
             };
         }
 
-        // 5. PDF Generation Logic
+        // 7. PDF Generation Logic
         function downloadPDF() {
-            // Prompt the user for a filename before downloading
             let filename = prompt("Enter a name for your PDF file:", "My-Schedule");
             
-            if (filename === null) return; // Stop if the user clicks "Cancel"
-            if (filename.trim() === "") filename = "Dashboard"; // Fallback name
+            if (filename === null) return; 
+            if (filename.trim() === "") filename = "Dashboard"; 
             
             const element = document.getElementById('pdf-container');
             
-            // Configuration for the PDF
             const opt = {
                 margin:       0.5,
                 filename:     `${filename}.pdf`,
                 image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2 }, // Higher resolution
+                html2canvas:  { scale: 2 }, 
                 jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
             };
 
-            // Generate PDF from the container element
             html2pdf().set(opt).from(element).save();
         }
     </script>
