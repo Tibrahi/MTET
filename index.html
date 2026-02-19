@@ -52,7 +52,7 @@
             <p class="text-gray-500 mb-6">Let's set up your course schedule.</p>
             
             <label class="block text-sm font-semibold text-gray-600 mb-2">How many courses will you take?</label>
-            <input type="number" id="courseLimit" min="1" placeholder="e.g., 2" 
+            <input type="number" id="courseLimit" min="1" placeholder="e.g., 6" 
                 class="w-full text-center px-4 py-3 rounded-xl border border-gray-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-200 transition-all duration-300 outline-none mb-6 text-lg font-bold">
             
             <button onclick="startCourseEntry()" 
@@ -65,7 +65,7 @@
             <div class="flex justify-between items-center mb-6 border-b pb-4">
                 <h2 class="text-xl font-bold text-gray-800">Add Course Information</h2>
                 <span id="progressIndicator" class="bg-purple-100 text-purple-700 py-1 px-4 rounded-full text-sm font-bold shadow-sm">
-                    0 / 0
+                    Course 1 of X
                 </span>
             </div>
 
@@ -102,7 +102,7 @@
                 </div>
 
                 <div class="flex items-end md:col-span-1">
-                    <button type="submit" title="Add Course"
+                    <button type="submit" title="Create"
                         class="w-full bg-gradient-to-r from-purple-500 to-indigo-500 text-white font-bold py-2 px-6 rounded-xl shadow-lg hover:shadow-purple-500/50 transform hover:-translate-y-1 hover:scale-[1.02] active:scale-95 transition-all duration-300 flex justify-center items-center text-3xl pb-3">
                         +
                     </button>
@@ -120,7 +120,10 @@
             </div>
 
             <div id="pdf-container" class="bg-white shadow-xl rounded-2xl p-6 md:p-8 min-h-[300px]">
-                <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b pb-2">Your Schedule</h2>
+                <div class="mb-6 border-b pb-4 flex flex-col md:flex-row md:justify-between md:items-end gap-2">
+                    <h2 class="text-2xl font-bold text-gray-800">Your Schedule</h2>
+                    <p id="timestampDisplay" class="text-sm font-medium text-purple-600 bg-purple-50 px-3 py-1 rounded-lg inline-block"></p>
+                </div>
                 
                 <div class="hidden md:grid grid-cols-5 gap-4 text-sm font-bold text-gray-500 uppercase tracking-wider mb-4 px-4">
                     <div>Day</div>
@@ -142,7 +145,6 @@
     </div>
 
     <script>
-        // State variables for our new multi-step flow
         let targetCourseCount = 0;
         let tempCourses = [];
 
@@ -157,19 +159,23 @@
             targetCourseCount = parseInt(limitInput);
             tempCourses = [];
             
-            // Switch from Setup View to Form View
+            // Switch views
             document.getElementById('setupView').classList.add('hidden');
             document.getElementById('formView').classList.remove('hidden');
             
             updateProgress();
         }
 
-        // Update the progress bubble visually
+        // 2. Update progress starting from 1
         function updateProgress() {
-            document.getElementById('progressIndicator').innerText = `Added: ${tempCourses.length} / ${targetCourseCount}`;
+            let currentNumber = tempCourses.length + 1;
+            // Cap the visual number so it doesn't exceed the limit for the split second before the dashboard loads
+            if (currentNumber > targetCourseCount) currentNumber = targetCourseCount; 
+            
+            document.getElementById('progressIndicator').innerText = `Course ${currentNumber} of ${targetCourseCount}`;
         }
 
-        // 2. Format 24hr time to AM/PM easily
+        // 3. Format time
         function formatAMPM(timeStr) {
             let [hours, minutes] = timeStr.split(':');
             let ampm = hours >= 12 ? 'PM' : 'AM';
@@ -178,7 +184,7 @@
             return `${hours}:${minutes} ${ampm}`;
         }
 
-        // 3. Set up IndexedDB
+        // 4. Set up IndexedDB
         let db;
         const request = indexedDB.open("ScheduleDashboardDB", 1);
 
@@ -197,11 +203,10 @@
             console.error("IndexedDB Error: ", event.target.errorCode);
         };
 
-        // 4. Handle Form Submit (now stores temporarily until limit is reached)
+        // 5. Handle Form Submit
         document.getElementById('scheduleForm').addEventListener('submit', function(e) {
             e.preventDefault();
 
-            // Format date to strictly be DD-MMM (e.g. '25-Oct') regardless of how user capitalized it
             let rawDate = document.getElementById('date').value;
             let dateParts = rawDate.split('-');
             let formattedDate = dateParts[0] + '-' + dateParts[1].charAt(0).toUpperCase() + dateParts[1].slice(1).toLowerCase();
@@ -214,19 +219,24 @@
                 group: document.getElementById('groupName').value
             };
 
-            // Push to temporary array and clear form
             tempCourses.push(newItem);
             document.getElementById('scheduleForm').reset();
             updateProgress();
 
-            // If we reached the user's limit, save all to DB and show dashboard
+            // Automatically switch when limit is hit
             if (tempCourses.length >= targetCourseCount) {
                 saveAllAndShowDashboard();
             }
         });
 
-        // 5. Save loop logic
+        // 6. Save data, generate timestamp, and display dashboard
         function saveAllAndShowDashboard() {
+            // Generate Timestamp
+            const now = new Date();
+            const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const dateString = now.toLocaleDateString();
+            document.getElementById('timestampDisplay').innerText = `Generated on ${dateString} at ${timeString}`;
+
             const transaction = db.transaction(["schedules"], "readwrite");
             const store = transaction.objectStore("schedules");
             
@@ -236,7 +246,6 @@
                 const addRequest = store.add(item);
                 addRequest.onsuccess = function() {
                     addedCount++;
-                    // Only load the dashboard once the final item finishes saving
                     if (addedCount === tempCourses.length) {
                         document.getElementById('formView').classList.add('hidden');
                         document.getElementById('dashboardView').classList.remove('hidden');
@@ -245,11 +254,10 @@
                 };
             });
             
-            // Clear temporary cache
             tempCourses = [];
         }
 
-        // 6. Load Data & Render Rows
+        // 7. Load Data & Render Rows
         function loadDashboard() {
             const listContainer = document.getElementById('dashboardList');
             const emptyState = document.getElementById('emptyState');
@@ -260,7 +268,7 @@
 
             getRequest.onsuccess = function() {
                 const data = getRequest.result;
-                listContainer.innerHTML = ''; // Clear list
+                listContainer.innerHTML = ''; 
                 
                 if (data.length === 0) {
                     emptyState.style.display = 'block';
@@ -289,12 +297,12 @@
             };
         }
 
-        // 7. PDF Generation Logic
+        // 8. PDF Generation (includes prompt & timestamp)
         function downloadPDF() {
             let filename = prompt("Enter a name for your PDF file:", "My-Schedule");
             
             if (filename === null) return; 
-            if (filename.trim() === "") filename = "Dashboard"; 
+            if (filename.trim() === "") filename = "Course-Dashboard"; 
             
             const element = document.getElementById('pdf-container');
             
