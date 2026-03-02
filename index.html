@@ -135,7 +135,6 @@
 
         request.onupgradeneeded = function(event) {
             db = event.target.result;
-            // Create an object store to hold our data
             if (!db.objectStoreNames.contains("schedules")) {
                 db.createObjectStore("schedules", { keyPath: "id", autoIncrement: true });
             }
@@ -143,7 +142,7 @@
 
         request.onsuccess = function(event) {
             db = event.target.result;
-            loadDashboard(); // Load data when DB is ready
+            loadDashboard(); 
         };
 
         request.onerror = function(event) {
@@ -169,7 +168,7 @@
 
             addRequest.onsuccess = function() {
                 document.getElementById('scheduleForm').reset();
-                loadDashboard(); // Refresh the list
+                loadDashboard(); 
             };
         });
 
@@ -184,19 +183,19 @@
 
             getRequest.onsuccess = function() {
                 const data = getRequest.result;
-                listContainer.innerHTML = ''; // Clear list
+                listContainer.innerHTML = ''; 
                 
                 if (data.length === 0) {
                     emptyState.style.display = 'block';
                 } else {
                     emptyState.style.display = 'none';
                     
-                    // Render each item with an animation delay based on its index
                     data.forEach((item, index) => {
-                        const delay = index * 0.1; // Staggered animation
+                        const delay = index * 0.1; 
                         
                         const row = document.createElement('div');
-                        row.className = `animate-slide-up bg-gray-50 hover:bg-purple-50 border border-gray-100 rounded-xl p-4 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-md`;
+                        // ADDED 'schedule-row' class here for PDF generation logic
+                        row.className = `schedule-row animate-slide-up bg-gray-50 hover:bg-purple-50 border border-gray-100 rounded-xl p-4 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-md`;
                         row.style.animationDelay = `${delay}s`;
                         
                         row.innerHTML = `
@@ -216,24 +215,27 @@
 
         // 5. PDF Generation Logic
         function downloadPDF() {
-            // Prompt the user for a filename before downloading
             let filename = prompt("Enter a name for your PDF file:", "My-Schedule");
             
-            if (filename === null) return; // Stop if the user clicks "Cancel"
-            if (filename.trim() === "") filename = "Dashboard"; // Fallback name
+            if (filename === null) return; 
+            if (filename.trim() === "") filename = "Dashboard"; 
             
             const element = document.getElementById('pdf-container');
             
-            // Configuration for the PDF
             const opt = {
-                margin:       0.5,
+                margin:       [0.5, 0.5, 0.5, 0.5], // Top, Left, Bottom, Right margins
                 filename:     `${filename}.pdf`,
-                image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2 }, // Higher resolution
-                jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+                image:        { type: 'jpeg', quality: 1 }, 
+                html2canvas:  { 
+                    scale: 2, 
+                    useCORS: true,
+                    windowWidth: 1024 // Forces desktop layout rendering (prevents stacking)
+                },
+                jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' },
+                // Tells the PDF generator NEVER to slice elements with this class across pages
+                pagebreak:    { mode: ['css', 'legacy'], avoid: '.schedule-row' } 
             };
 
-            // Generate PDF from the container element
             html2pdf().set(opt).from(element).save();
         }
     </script>
