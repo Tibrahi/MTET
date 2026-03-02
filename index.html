@@ -6,7 +6,6 @@
     <title>Animated Class Dashboard</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
-    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <script>
@@ -120,16 +119,16 @@
     </div>
 
     <script>
-        // 1. Format 24hr time to AM/PM easily
+        // Format 24hr time to AM/PM easily
         function formatAMPM(timeStr) {
             let [hours, minutes] = timeStr.split(':');
             let ampm = hours >= 12 ? 'PM' : 'AM';
             hours = hours % 12;
-            hours = hours ? hours : 12; // the hour '0' should be '12'
+            hours = hours ? hours : 12; 
             return `${hours}:${minutes} ${ampm}`;
         }
 
-        // 2. Set up IndexedDB
+        // Set up IndexedDB
         let db;
         const request = indexedDB.open("ScheduleDashboardDB", 1);
 
@@ -149,7 +148,7 @@
             console.error("IndexedDB Error: ", event.target.errorCode);
         };
 
-        // 3. Handle Form Submit
+        // Handle Form Submit
         document.getElementById('scheduleForm').addEventListener('submit', function(e) {
             e.preventDefault();
 
@@ -172,7 +171,7 @@
             };
         });
 
-        // 4. Load Data & Render Rows
+        // Load Data & Render Rows
         function loadDashboard() {
             const listContainer = document.getElementById('dashboardList');
             const emptyState = document.getElementById('emptyState');
@@ -194,9 +193,8 @@
                         const delay = index * 0.1; 
                         
                         const row = document.createElement('div');
-                        // ADDED 'schedule-row' class here for PDF generation logic
-                        row.className = `schedule-row animate-slide-up bg-gray-50 hover:bg-purple-50 border border-gray-100 rounded-xl p-4 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-md`;
-                        row.style.animationDelay = `${delay}s`;
+                        // Removed animation classes for cleaner PDF rendering
+                        row.className = `bg-gray-50 border border-gray-100 rounded-xl p-4`;
                         
                         row.innerHTML = `
                             <div class="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
@@ -213,7 +211,7 @@
             };
         }
 
-        // 5. PDF Generation Logic
+        // PDF Generation Logic - Updated to force perfect table layout
         function downloadPDF() {
             let filename = prompt("Enter a name for your PDF file:", "My-Schedule");
             
@@ -223,17 +221,12 @@
             const element = document.getElementById('pdf-container');
             
             const opt = {
-                margin:       [0.5, 0.5, 0.5, 0.5], // Top, Left, Bottom, Right margins
+                margin:       0.5,
                 filename:     `${filename}.pdf`,
-                image:        { type: 'jpeg', quality: 1 }, 
-                html2canvas:  { 
-                    scale: 2, 
-                    useCORS: true,
-                    windowWidth: 1024 // Forces desktop layout rendering (prevents stacking)
-                },
-                jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' },
-                // Tells the PDF generator NEVER to slice elements with this class across pages
-                pagebreak:    { mode: ['css', 'legacy'], avoid: '.schedule-row' } 
+                image:        { type: 'jpeg', quality: 0.98 },
+                // windowWidth: 1024 forces Tailwind to use the desktop layout (md:grid-cols-5)
+                html2canvas:  { scale: 2, windowWidth: 1024 }, 
+                jsPDF:        { unit: 'in', format: 'letter', orientation: 'landscape' } // Landscape gives more room for the 5 columns
             };
 
             html2pdf().set(opt).from(element).save();
