@@ -8,14 +8,14 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
-    <!-- PDF SUPER-FIX STYLES - 100% unsquished + fully visible -->
+    <!-- PDF SUPER-FIX - 100% unsquished, fully visible table -->
     <style>
         body { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
         
-        /* CRITICAL A4 LOCK - NO SCROLLING, NO CUTOFF EVER */
+        /* LOCKS perfect A4 - no scroll, no left cutoff */
         #pdf-container.pdf-mode {
-            width: 820px !important;
-            max-width: 820px !important;
+            width: 840px !important;
+            max-width: 840px !important;
             padding: 50px 45px !important;
             margin: 0 auto !important;
             box-shadow: none !important;
@@ -27,31 +27,23 @@
             width: 100% !important;
             table-layout: fixed !important;
             border-collapse: collapse !important;
-            min-width: 0 !important;
         }
         
         .pdf-mode .schedule-table th,
         .pdf-mode .schedule-table td {
-            padding: 16px 12px !important;
+            padding: 18px 14px !important;
             word-break: break-word !important;
             overflow-wrap: break-word !important;
-            hyphens: auto !important;
             white-space: normal !important;
             vertical-align: middle !important;
         }
         
-        /* PERFECT COLUMN WIDTHS - Course gets maximum space */
-        .pdf-mode .schedule-table col:nth-child(1) { width: 16%; } /* Day */
-        .pdf-mode .schedule-table col:nth-child(2) { width: 15%; } /* Date */
-        .pdf-mode .schedule-table col:nth-child(3) { width: 14%; } /* Time */
-        .pdf-mode .schedule-table col:nth-child(4) { width: 38%; } /* Course - biggest */
+        /* Perfect column balance - Course gets most space */
+        .pdf-mode .schedule-table col:nth-child(1) { width: 15%; } /* Day */
+        .pdf-mode .schedule-table col:nth-child(2) { width: 16%; } /* Date */
+        .pdf-mode .schedule-table col:nth-child(3) { width: 15%; } /* Time */
+        .pdf-mode .schedule-table col:nth-child(4) { width: 37%; } /* Course */
         .pdf-mode .schedule-table col:nth-child(5) { width: 17%; } /* Group */
-        
-        .pdf-mode .group-badge {
-            display: inline-block !important;
-            max-width: 100% !important;
-            white-space: normal !important;
-        }
     </style>
 
     <script>
@@ -81,7 +73,7 @@
             <h1 class="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-indigo-600 mb-2 drop-shadow-sm">
                 Course Dashboard
             </h1>
-            <p class="text-gray-500">Calendar + Clock Picker • Professional PDF</p>
+            <p class="text-gray-500">Calendar + Real Clock Picker • Time shows exactly as you selected</p>
         </div>
 
         <div class="bg-white/80 backdrop-blur-md shadow-xl rounded-2xl p-6 md:p-8 animate-fade-in-down transition-all duration-300 hover:shadow-2xl">
@@ -100,7 +92,7 @@
                 </div>
 
                 <div class="group">
-                    <label class="block text-sm font-semibold text-gray-600 mb-1">Time</label>
+                    <label class="block text-sm font-semibold text-gray-600 mb-1">Time (clock picker)</label>
                     <input type="time" id="hour" required
                         class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-200 transition-all outline-none">
                 </div>
@@ -139,7 +131,7 @@
                 
                 <div class="text-center mb-10 pb-6 border-b-2 border-indigo-100">
                     <h2 class="text-3xl font-bold text-gray-800">Your Class Schedule</h2>
-                    <p class="text-sm text-gray-500 mt-2">Calendar-selected • Clock-selected • PDF-optimized</p>
+                    <p class="text-sm text-gray-500 mt-2">Time shown exactly as you picked from the clock</p>
                 </div>
                 
                 <div class="table-wrapper">
@@ -168,7 +160,7 @@
                 <div id="emptyState" class="text-center py-20 text-gray-400">
                     <svg class="w-16 h-16 mx-auto mb-4 text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
                     <p class="text-lg font-medium">No classes yet</p>
-                    <p class="text-sm">Use the calendar & clock above</p>
+                    <p class="text-sm">Pick date & time from calendar/clock above</p>
                 </div>
 
             </div>
@@ -177,10 +169,11 @@
     </div>
 
     <script>
-        // 12-hour AM/PM formatter for beautiful display
-        function formatAMPM(timeStr) {
+        // FIXED: Time now renders EXACTLY as you selected from the clock (12h AM/PM format)
+        function formatTime(timeStr) {
             if (!timeStr) return '';
-            let [hours, minutes] = timeStr.split(':');
+            let [hoursStr, minutes] = timeStr.split(':');
+            let hours = parseInt(hoursStr, 10);           // Fixed: parseInt to avoid any string bug
             let ampm = hours >= 12 ? 'PM' : 'AM';
             hours = hours % 12;
             hours = hours ? hours : 12;
@@ -207,8 +200,8 @@
 
             const newItem = {
                 day: document.getElementById('day').value.trim(),
-                date: document.getElementById('date').value,           // YYYY-MM-DD from calendar
-                time: formatAMPM(document.getElementById('hour').value), // beautiful 12h from clock
+                date: document.getElementById('date').value,           // Calendar date
+                time: formatTime(document.getElementById('hour').value), // FIXED: now always matches your clock selection
                 course: document.getElementById('course').value.trim(),
                 group: document.getElementById('groupName').value.trim()
             };
@@ -246,7 +239,7 @@
                             <td class="px-6 py-5 font-medium text-gray-700">${item.time}</td>
                             <td class="px-6 py-5 font-semibold text-gray-800">${item.course}</td>
                             <td class="px-6 py-5">
-                                <span class="group-badge bg-purple-100 text-purple-700 text-xs font-bold px-4 py-2 rounded-full border border-purple-200 shadow-sm">
+                                <span class="bg-purple-100 text-purple-700 text-xs font-bold px-4 py-2 rounded-full border border-purple-200 shadow-sm">
                                     ${item.group}
                                 </span>
                             </td>
@@ -263,7 +256,7 @@
             if (!filename.trim()) filename = "Class-Schedule";
 
             const element = document.getElementById('pdf-container');
-            element.classList.add('pdf-mode');   // LOCK perfect A4 layout
+            element.classList.add('pdf-mode');
 
             const opt = {
                 margin: [18, 18, 18, 18],
@@ -272,17 +265,16 @@
                 html2canvas: { 
                     scale: 3.5, 
                     useCORS: true,
-                    width: 820,
+                    width: 840,
                     scrollX: 0,
                     scrollY: 0,
-                    backgroundColor: '#ffffff',
-                    logging: false
+                    backgroundColor: '#ffffff'
                 },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
 
             html2pdf().set(opt).from(element).save().then(() => {
-                element.classList.remove('pdf-mode');   // Restore normal view
+                element.classList.remove('pdf-mode');
             });
         }
     </script>
