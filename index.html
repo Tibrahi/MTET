@@ -35,13 +35,12 @@
             white-space: normal !important;
         }
         
-        /* Column widths - perfect balance */
-        .pdf-mode .schedule-table col:nth-child(1) { width: 14%; } /* Day */
-        .pdf-mode .schedule-table col:nth-child(2) { width: 15%; } /* Date */
-        .pdf-mode .schedule-table col:nth-child(3) { width: 14%; } /* Time */
-        .pdf-mode .schedule-table col:nth-child(4) { width: 32%; } /* Course */
-        .pdf-mode .schedule-table col:nth-child(5) { width: 13%; } /* Group */
-        .pdf-mode .schedule-table col:nth-child(6) { width: 12%; } /* Status */
+        .pdf-mode .schedule-table col:nth-child(1) { width: 14%; }
+        .pdf-mode .schedule-table col:nth-child(2) { width: 15%; }
+        .pdf-mode .schedule-table col:nth-child(3) { width: 14%; }
+        .pdf-mode .schedule-table col:nth-child(4) { width: 32%; }
+        .pdf-mode .schedule-table col:nth-child(5) { width: 13%; }
+        .pdf-mode .schedule-table col:nth-child(6) { width: 12%; }
         
         .status-done { text-decoration: line-through; color: #16a34a; }
         .status-redo { color: #ea580c; font-weight: 600; }
@@ -52,7 +51,6 @@
 
     <div class="max-w-6xl mx-auto space-y-8">
         
-        <!-- Editable Title -->
         <div class="text-center">
             <div id="mainTitle" onclick="editTitle(this)" 
                  class="inline-block text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-indigo-600 cursor-pointer hover:underline">
@@ -61,7 +59,6 @@
             <p class="text-gray-500 text-sm mt-1">Click title to edit • Saved automatically</p>
         </div>
 
-        <!-- Exam Type Selector -->
         <div class="flex justify-center">
             <div class="bg-white rounded-3xl shadow px-8 py-3 flex items-center gap-4">
                 <span class="font-semibold text-gray-600">Exam Type:</span>
@@ -157,30 +154,38 @@
     </div>
 
     <script>
-        // Clean readable time
+        // ULTRA SAFE time formatter (NO template literals - only + concatenation)
+        // This completely fixes the "( {h}: ){min} AM" garbage issue
         function formatTime(timeStr) {
-            if (!timeStr || !timeStr.includes(':')) return timeStr || '—';
-            const [hStr, min] = timeStr.split(':');
-            let h = parseInt(hStr, 10);
-            if (isNaN(h)) return timeStr;
-            const ampm = h >= 12 ? 'PM' : 'AM';
-            h = h % 12 || 12;
-            return `\( {h}: \){min} ${ampm}`;
+            if (!timeStr || timeStr.indexOf(':') === -1) return timeStr || '—';
+            
+            var parts = timeStr.split(':');
+            var hoursStr = parts[0];
+            var minutes = parts[1];
+            
+            var hours = parseInt(hoursStr, 10);
+            if (isNaN(hours)) return timeStr;
+            
+            var ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12;
+            hours = hours ? hours : 12;
+            
+            // Pure string concatenation - impossible to show as literal text
+            return hours + ':' + minutes + ' ' + ampm;
         }
 
         // Nice date
         function formatDate(iso) {
             if (!iso) return '';
-            const d = new Date(iso);
+            var d = new Date(iso);
             if (isNaN(d.getTime())) return iso;
             return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
         }
 
-        // Status classes
         function getStatusHTML(status) {
-            if (status === 'Done') return `<span class="status-done inline-block bg-green-100 text-green-700 px-4 py-1 rounded-full text-xs font-bold">DONE ✓</span>`;
-            if (status === 'Redo') return `<span class="status-redo inline-block bg-orange-100 text-orange-700 px-4 py-1 rounded-full text-xs font-bold">REDO !</span>`;
-            return `<span class="status-pending inline-block bg-slate-100 text-slate-700 px-4 py-1 rounded-full text-xs font-bold">PENDING</span>`;
+            if (status === 'Done') return '<span class="status-done inline-block bg-green-100 text-green-700 px-4 py-1 rounded-full text-xs font-bold">DONE ✓</span>';
+            if (status === 'Redo') return '<span class="status-redo inline-block bg-orange-100 text-orange-700 px-4 py-1 rounded-full text-xs font-bold">REDO !</span>';
+            return '<span class="status-pending inline-block bg-slate-100 text-slate-700 px-4 py-1 rounded-full text-xs font-bold">PENDING</span>';
         }
 
         let db;
@@ -193,7 +198,7 @@
                 db.createObjectStore("exams", { keyPath: "id", autoIncrement: true });
             }
             if (!db.objectStoreNames.contains("config")) {
-                const store = db.createObjectStore("config", { keyPath: "id" });
+                var store = db.createObjectStore("config", { keyPath: "id" });
                 store.put({ id: "settings", timetableTitle: "Your Exam Schedule", examType: "Mid Semester Exam" });
             }
         };
@@ -204,10 +209,9 @@
             loadDashboard();
         };
 
-        // Load & apply saved config
         function loadConfig() {
             db.transaction(["config"], "readonly").objectStore("config").get("settings").onsuccess = function(e) {
-                const settings = e.target.result || { timetableTitle: "Your Exam Schedule", examType: "Mid Semester Exam" };
+                var settings = e.target.result || { timetableTitle: "Your Exam Schedule", examType: "Mid Semester Exam" };
                 document.getElementById("mainTitle").textContent = settings.timetableTitle;
                 document.getElementById("pdfHeader").textContent = settings.timetableTitle;
                 document.getElementById("examType").value = settings.examType;
@@ -215,14 +219,13 @@
         }
 
         function saveConfig(title, examType) {
-            const tx = db.transaction(["config"], "readwrite");
+            var tx = db.transaction(["config"], "readwrite");
             tx.objectStore("config").put({ id: "settings", timetableTitle: title, examType: examType });
         }
 
-        // Make title editable
         function editTitle(el) {
-            const current = el.textContent.trim();
-            const input = document.createElement("input");
+            var current = el.textContent.trim();
+            var input = document.createElement("input");
             input.value = current;
             input.className = "text-4xl font-extrabold text-center bg-white border-2 border-purple-400 rounded-2xl px-6 py-2 outline-none w-full max-w-md mx-auto";
             el.replaceWith(input);
@@ -230,40 +233,39 @@
             input.select();
 
             function save() {
-                let newTitle = input.value.trim();
+                var newTitle = input.value.trim();
                 if (!newTitle) newTitle = "Your Exam Schedule";
-                const newEl = document.createElement("div");
+                var newEl = document.createElement("div");
                 newEl.id = "mainTitle";
-                newEl.onclick = () => editTitle(newEl);
+                newEl.onclick = function() { editTitle(newEl); };
                 newEl.className = "inline-block text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-indigo-600 cursor-pointer hover:underline";
                 newEl.textContent = newTitle;
                 input.replaceWith(newEl);
 
-                const examType = document.getElementById("examType").value;
+                var examType = document.getElementById("examType").value;
                 saveConfig(newTitle, examType);
                 document.getElementById("pdfHeader").textContent = newTitle;
             }
 
             input.onblur = save;
-            input.onkeydown = (e) => { if (e.key === "Enter") save(); };
+            input.onkeydown = function(e) { if (e.key === "Enter") save(); };
         }
 
         function saveExamType() {
-            const titleEl = document.getElementById("mainTitle");
-            const newType = document.getElementById("examType").value;
-            const currentTitle = titleEl.textContent.trim();
+            var titleEl = document.getElementById("mainTitle");
+            var newType = document.getElementById("examType").value;
+            var currentTitle = titleEl.textContent.trim();
             saveConfig(currentTitle, newType);
             document.getElementById("pdfHeader").textContent = currentTitle;
         }
 
-        // Form submit
         document.getElementById('scheduleForm').addEventListener('submit', function(e) {
             e.preventDefault();
 
-            const newItem = {
+            var newItem = {
                 day: document.getElementById('day').value.trim(),
                 date: document.getElementById('date').value,
-                time: formatTime(document.getElementById('hour').value),
+                time: formatTime(document.getElementById('hour').value),   // Always clean "1:00 PM"
                 course: document.getElementById('course').value.trim(),
                 group: document.getElementById('groupName').value.trim(),
                 status: "Pending"
@@ -272,22 +274,22 @@
             db.transaction(["exams"], "readwrite")
               .objectStore("exams")
               .add(newItem)
-              .onsuccess = () => {
+              .onsuccess = function() {
                   document.getElementById('scheduleForm').reset();
                   loadDashboard();
               };
         });
 
         function loadDashboard() {
-            const tbody = document.getElementById('dashboardBody');
-            const empty = document.getElementById('emptyState');
-            const table = document.getElementById('scheduleTable');
+            var tbody = document.getElementById('dashboardBody');
+            var empty = document.getElementById('emptyState');
+            var table = document.getElementById('scheduleTable');
 
             db.transaction(["exams"], "readonly")
               .objectStore("exams")
               .getAll()
               .onsuccess = function(e) {
-                const data = e.target.result || [];
+                var data = e.target.result || [];
                 tbody.innerHTML = '';
 
                 if (data.length === 0) {
@@ -299,37 +301,35 @@
                 empty.style.display = 'none';
                 table.style.display = 'table';
 
-                data.forEach(item => {
-                    const tr = document.createElement('tr');
+                data.forEach(function(item) {
+                    var tr = document.createElement('tr');
                     tr.className = 'hover:bg-gray-50 transition-colors';
-                    tr.innerHTML = `
-                        <td class="px-6 py-5 font-semibold text-indigo-700">${item.day}</td>
-                        <td class="px-6 py-5 font-medium text-gray-700">${formatDate(item.date)}</td>
-                        <td class="px-6 py-5 font-medium text-gray-700">${item.time}</td>
-                        <td class="px-6 py-5 font-semibold text-gray-800">${item.course}</td>
-                        <td class="px-6 py-5 font-medium text-gray-700">${item.group}</td>
-                        <td class="px-6 py-5">
-                            <div class="flex items-center gap-2">
-                                ${getStatusHTML(item.status)}
-                                <select onchange="updateStatus(${item.id}, this.value)" 
-                                        class="text-xs bg-white border border-gray-300 rounded-lg px-2 py-1">
-                                    <option value="Pending" ${item.status==='Pending'?'selected':''}>Pending</option>
-                                    <option value="Done" ${item.status==='Done'?'selected':''}>Done</option>
-                                    <option value="Redo" ${item.status==='Redo'?'selected':''}>Redo</option>
-                                </select>
-                            </div>
-                        </td>
-                    `;
+                    tr.innerHTML = 
+                        '<td class="px-6 py-5 font-semibold text-indigo-700">' + item.day + '</td>' +
+                        '<td class="px-6 py-5 font-medium text-gray-700">' + formatDate(item.date) + '</td>' +
+                        '<td class="px-6 py-5 font-medium text-gray-700">' + item.time + '</td>' +
+                        '<td class="px-6 py-5 font-semibold text-gray-800">' + item.course + '</td>' +
+                        '<td class="px-6 py-5 font-medium text-gray-700">' + item.group + '</td>' +
+                        '<td class="px-6 py-5">' +
+                            '<div class="flex items-center gap-2">' +
+                                getStatusHTML(item.status) +
+                                '<select onchange="updateStatus(' + item.id + ', this.value)" class="text-xs bg-white border border-gray-300 rounded-lg px-2 py-1">' +
+                                    '<option value="Pending" ' + (item.status==='Pending'?'selected':'') + '>Pending</option>' +
+                                    '<option value="Done" ' + (item.status==='Done'?'selected':'') + '>Done</option>' +
+                                    '<option value="Redo" ' + (item.status==='Redo'?'selected':'') + '>Redo</option>' +
+                                '</select>' +
+                            '</div>' +
+                        '</td>';
                     tbody.appendChild(tr);
                 });
             };
         }
 
         function updateStatus(id, newStatus) {
-            const tx = db.transaction(["exams"], "readwrite");
-            const store = tx.objectStore("exams");
+            var tx = db.transaction(["exams"], "readwrite");
+            var store = tx.objectStore("exams");
             store.get(id).onsuccess = function(e) {
-                const item = e.target.result;
+                var item = e.target.result;
                 if (item) {
                     item.status = newStatus;
                     store.put(item);
@@ -341,7 +341,7 @@
         function clearAllData() {
             if (!confirm("Clear ALL data and reset to defaults?")) return;
             
-            const tx = db.transaction(["exams", "config"], "readwrite");
+            var tx = db.transaction(["exams", "config"], "readwrite");
             tx.objectStore("exams").clear();
             tx.objectStore("config").put({ 
                 id: "settings", 
@@ -349,7 +349,7 @@
                 examType: "Mid Semester Exam" 
             });
             
-            tx.oncomplete = () => {
+            tx.oncomplete = function() {
                 document.getElementById("mainTitle").textContent = "Your Exam Schedule";
                 document.getElementById("pdfHeader").textContent = "Your Exam Schedule";
                 document.getElementById("examType").value = "Mid Semester Exam";
@@ -358,15 +358,15 @@
         }
 
         function downloadPDF() {
-            let filename = prompt("PDF filename:", "Exam-Timetable");
+            var filename = prompt("PDF filename:", "Exam-Timetable");
             if (filename === null || filename.trim() === "") filename = "Exam-Timetable";
 
-            const element = document.getElementById('pdf-container');
+            var element = document.getElementById('pdf-container');
             element.classList.add('pdf-mode');
 
-            const opt = {
+            var opt = {
                 margin: [22, 22, 22, 22],
-                filename: `${filename}.pdf`,
+                filename: filename + '.pdf',
                 image: { type: 'jpeg', quality: 0.99 },
                 html2canvas: { 
                     scale: 3.5, 
@@ -379,7 +379,7 @@
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
 
-            html2pdf().set(opt).from(element).save().then(() => {
+            html2pdf().set(opt).from(element).save().then(function() {
                 element.classList.remove('pdf-mode');
             });
         }
