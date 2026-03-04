@@ -8,6 +8,32 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
+    <!-- PDF OPTIMIZATION STYLES -->
+    <style>
+        body { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        
+        /* Forces perfect A4 layout during PDF capture - this is the key fix for squished text */
+        #pdf-container.pdf-mode {
+            width: 794px !important;      /* Exact A4 width in px */
+            max-width: 794px !important;
+            padding: 35px 30px !important;
+            margin: 0 auto !important;
+            box-shadow: none !important;
+        }
+        
+        /* Better column proportions (Course gets more space) */
+        .pdf-mode .grid-cols-5,
+        .pdf-mode [class*="grid-cols-5"] {
+            grid-template-columns: 1.15fr 0.9fr 1fr 1.75fr 1.2fr !important;
+        }
+        
+        /* Prevent any text squishing/wrapping issues */
+        .pdf-row {
+            word-break: break-word;
+            overflow-wrap: break-word;
+        }
+    </style>
+
     <script>
         tailwind.config = {
             theme: {
@@ -106,9 +132,10 @@
                 </div>
                 
                 <div class="overflow-x-auto">
-                    <div class="min-w-[750px] rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+                    <div class="min-w-[820px] rounded-xl border border-gray-200 overflow-hidden shadow-sm">
                         
-                        <div class="grid grid-cols-5 gap-4 bg-gradient-to-r from-indigo-50 to-purple-50 border-b border-gray-200 text-sm font-extrabold text-indigo-900 uppercase tracking-wider px-6 py-4">
+                        <!-- Updated header with better column proportions -->
+                        <div class="grid grid-cols-[1.15fr_0.9fr_1fr_1.75fr_1.2fr] gap-4 bg-gradient-to-r from-indigo-50 to-purple-50 border-b border-gray-200 text-sm font-extrabold text-indigo-900 uppercase tracking-wider px-6 py-4">
                             <div>Day</div>
                             <div>Date</div>
                             <div>Time</div>
@@ -117,7 +144,7 @@
                         </div>
 
                         <div id="dashboardList" class="divide-y divide-gray-100 bg-white">
-                            </div>
+                        </div>
                         
                     </div>
                 </div>
@@ -140,7 +167,7 @@
             let ampm = hours >= 12 ? 'PM' : 'AM';
             hours = hours % 12;
             hours = hours ? hours : 12; 
-            return `${hours}:${minutes} ${ampm}`;
+            return `\( {hours}: \){minutes} ${ampm}`;
         }
 
         // 2. Set up IndexedDB
@@ -186,7 +213,7 @@
             };
         });
 
-        // 4. Load Data & Render Rows
+        // 4. Load Data & Render Rows (updated grid + pdf-row class)
         function loadDashboard() {
             const listContainer = document.getElementById('dashboardList');
             const emptyState = document.getElementById('emptyState');
@@ -201,15 +228,14 @@
                 
                 if (data.length === 0) {
                     emptyState.style.display = 'block';
-                    listContainer.parentElement.style.display = 'none'; // Hide table wrapper if empty
+                    listContainer.parentElement.style.display = 'none';
                 } else {
                     emptyState.style.display = 'none';
-                    listContainer.parentElement.style.display = 'block'; // Show table wrapper
+                    listContainer.parentElement.style.display = 'block';
                     
                     data.forEach((item) => {
                         const row = document.createElement('div');
-                        // No animations here so the PDF captures it perfectly instantly
-                        row.className = `grid grid-cols-5 gap-4 items-center px-6 py-4 hover:bg-gray-50 transition-colors`;
+                        row.className = `grid grid-cols-[1.15fr_0.9fr_1fr_1.75fr_1.2fr] gap-4 items-center px-6 py-4 hover:bg-gray-50 transition-colors pdf-row`;
                         
                         row.innerHTML = `
                             <div class="font-bold text-indigo-600">${item.day}</div>
@@ -228,33 +254,45 @@
             };
         }
 
-        // 5. PDF Generation Logic (Optimized for exact page fitting)
+        // 5. UPDATED PDF Generation (no more squished text!)
         function downloadPDF() {
-            let filename = prompt("Enter a name for your PDF file:", "My-Schedule");
+            let filename = prompt("Enter a name for your PDF file:", "My-Class-Schedule");
             
             if (filename === null) return; 
             if (filename.trim() === "") filename = "Class-Schedule"; 
             
             const element = document.getElementById('pdf-container');
             
-            // Configuration optimized for perfect A4 fitting and crisp text
+            // Save original styles
+            const originalClass = element.className;
+            
+            // Activate PDF mode (fixed width + perfect column ratios)
+            element.classList.add('pdf-mode');
+
             const opt = {
-                margin:       [0.5, 0.5, 0.5, 0.5], // Top, Left, Bottom, Right
+                margin:       [15, 15, 15, 15],   // mm - clean professional margins
                 filename:     `${filename}.pdf`,
-                image:        { type: 'jpeg', quality: 1 },
+                image:        { type: 'jpeg', quality: 0.98 },
                 html2canvas:  { 
-                    scale: 2, 
+                    scale: 3,                     // Higher quality = sharp text
                     useCORS: true,
-                    windowWidth: 1024 // Forces Tailwind to render the 5 columns before capturing
+                    width: 794,                   // Force A4 width
+                    windowWidth: 850,
+                    scrollX: 0,
+                    scrollY: 0,
+                    backgroundColor: '#ffffff'
                 },
                 jsPDF:        { 
-                    unit: 'in', 
+                    unit: 'mm', 
                     format: 'a4', 
                     orientation: 'portrait' 
                 }
             };
 
-            html2pdf().set(opt).from(element).save();
+            html2pdf().set(opt).from(element).save().then(() => {
+                // Restore original styles
+                element.classList.remove('pdf-mode');
+            });
         }
     </script>
 </body>
