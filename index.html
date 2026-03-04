@@ -8,30 +8,40 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
-    <!-- PDF OPTIMIZATION STYLES -->
+    <!-- PDF PERFECT FIX STYLES -->
     <style>
         body { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
         
-        /* Forces perfect A4 layout during PDF capture - this is the key fix for squished text */
+        /* CRITICAL: Forces perfect A4 fit, removes ALL scrolling & left-side cutoff */
         #pdf-container.pdf-mode {
-            width: 794px !important;      /* Exact A4 width in px */
-            max-width: 794px !important;
-            padding: 35px 30px !important;
+            width: 780px !important;
+            max-width: 780px !important;
+            padding: 45px 40px !important;
             margin: 0 auto !important;
             box-shadow: none !important;
+            overflow: visible !important;
         }
         
-        /* Better column proportions (Course gets more space) */
-        .pdf-mode .grid-cols-5,
-        .pdf-mode [class*="grid-cols-5"] {
-            grid-template-columns: 1.15fr 0.9fr 1fr 1.75fr 1.2fr !important;
+        .pdf-mode .schedule-table {
+            width: 100% !important;
+            table-layout: fixed !important;
+            min-width: 0 !important;
         }
         
-        /* Prevent any text squishing/wrapping issues */
-        .pdf-row {
-            word-break: break-word;
-            overflow-wrap: break-word;
+        .pdf-mode .schedule-table th,
+        .pdf-mode .schedule-table td {
+            padding: 14px 10px !important;
+            word-break: break-word !important;
+            overflow-wrap: break-word !important;
+            hyphens: auto;
         }
+        
+        /* Column widths optimized for A4 (no cutoff, Course gets max space) */
+        .pdf-mode .schedule-table col:nth-child(1) { width: 18%; }
+        .pdf-mode .schedule-table col:nth-child(2) { width: 13%; }
+        .pdf-mode .schedule-table col:nth-child(3) { width: 15%; }
+        .pdf-mode .schedule-table col:nth-child(4) { width: 37%; }
+        .pdf-mode .schedule-table col:nth-child(5) { width: 17%; }
     </style>
 
     <script>
@@ -70,89 +80,94 @@
             <h1 class="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-indigo-600 mb-2 drop-shadow-sm">
                 Course Dashboard
             </h1>
-            <p class="text-gray-500">Manage your schedule with style</p>
+            <p class="text-gray-500">Professional Schedule • Any Date/Time Format</p>
         </div>
 
         <div class="bg-white/80 backdrop-blur-md shadow-xl rounded-2xl p-6 md:p-8 animate-fade-in-down transition-all duration-300 hover:shadow-2xl">
             <form id="scheduleForm" class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 
                 <div class="group">
-                    <label class="block text-sm font-semibold text-gray-600 mb-1 group-focus-within:text-purple-500 transition-colors">Day Name</label>
+                    <label class="block text-sm font-semibold text-gray-600 mb-1">Day Name</label>
                     <input type="text" id="day" placeholder="e.g., Monday" required
-                        class="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-200 transition-all duration-300 outline-none transform focus:-translate-y-1">
+                        class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-200 transition-all outline-none">
                 </div>
 
                 <div class="group">
-                    <label class="block text-sm font-semibold text-gray-600 mb-1 group-focus-within:text-purple-500 transition-colors">Date (DD-MM)</label>
-                    <input type="text" id="date" placeholder="e.g., 25-10" required pattern="\d{2}-\d{2}" title="Format: DD-MM"
-                        class="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-200 transition-all duration-300 outline-none transform focus:-translate-y-1">
+                    <label class="block text-sm font-semibold text-gray-600 mb-1">Date (any format)</label>
+                    <input type="text" id="date" placeholder="e.g., 25-10 or Oct 25 or 25/10/2025" required
+                        class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-200 transition-all outline-none">
                 </div>
 
                 <div class="group">
-                    <label class="block text-sm font-semibold text-gray-600 mb-1 group-focus-within:text-purple-500 transition-colors">Time (AM/PM)</label>
-                    <input type="time" id="hour" required
-                        class="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-200 transition-all duration-300 outline-none transform focus:-translate-y-1">
+                    <label class="block text-sm font-semibold text-gray-600 mb-1">Time (any format)</label>
+                    <input type="text" id="hour" placeholder="e.g., 09:30 AM, 14:30, 2:30 PM" required
+                        class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-200 transition-all outline-none">
                 </div>
 
                 <div class="group">
-                    <label class="block text-sm font-semibold text-gray-600 mb-1 group-focus-within:text-purple-500 transition-colors">Course</label>
-                    <input type="text" id="course" placeholder="e.g., Mathematics" required
-                        class="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-200 transition-all duration-300 outline-none transform focus:-translate-y-1">
+                    <label class="block text-sm font-semibold text-gray-600 mb-1">Course</label>
+                    <input type="text" id="course" placeholder="e.g., Advanced Mathematics" required
+                        class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-200 transition-all outline-none">
                 </div>
 
                 <div class="group">
-                    <label class="block text-sm font-semibold text-gray-600 mb-1 group-focus-within:text-purple-500 transition-colors">Group</label>
+                    <label class="block text-sm font-semibold text-gray-600 mb-1">Group</label>
                     <input type="text" id="groupName" placeholder="e.g., Group A" required
-                        class="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-200 transition-all duration-300 outline-none transform focus:-translate-y-1">
+                        class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-200 transition-all outline-none">
                 </div>
 
-                <div class="flex items-end md:col-span-1">
+                <div class="flex items-end">
                     <button type="submit" 
-                        class="w-full bg-gradient-to-r from-purple-500 to-indigo-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:shadow-purple-500/50 transform hover:-translate-y-1 hover:scale-[1.02] active:scale-95 transition-all duration-300">
-                        Add to Dashboard ✦
+                        class="w-full bg-gradient-to-r from-purple-500 to-indigo-500 text-white font-bold py-3.5 px-6 rounded-xl shadow-lg hover:shadow-purple-500/50 transform hover:-translate-y-1 transition-all">
+                        Add to Schedule ✦
                     </button>
                 </div>
             </form>
         </div>
 
-        <div class="flex justify-end animate-fade-in-down" style="animation-delay: 0.2s;">
+        <div class="flex justify-end">
             <button onclick="downloadPDF()" 
-                class="bg-gray-800 text-white font-semibold py-2 px-6 rounded-full shadow-md hover:bg-black transform hover:-translate-y-1 active:scale-95 transition-all duration-300 flex items-center gap-2">
-                <svg class="w-5 h-5 animate-bounce-slight" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                Download PDF
+                class="bg-gray-800 text-white font-semibold py-2.5 px-7 rounded-full shadow-md hover:bg-black transform hover:-translate-y-1 transition-all flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                Download Clean PDF
             </button>
         </div>
 
         <div class="bg-white shadow-xl rounded-2xl overflow-hidden">
-            <div id="pdf-container" class="bg-white p-6 md:p-10">
+            <div id="pdf-container" class="bg-white p-8 md:p-10">
                 
-                <div class="text-center mb-8 pb-4 border-b-2 border-indigo-50">
+                <div class="text-center mb-10 pb-6 border-b-2 border-indigo-100">
                     <h2 class="text-3xl font-bold text-gray-800">Your Class Schedule</h2>
-                    <p class="text-sm text-gray-500 mt-2">Generated dynamically via Course Dashboard</p>
+                    <p class="text-sm text-gray-500 mt-2">Beautiful &amp; Professional • Any format supported</p>
                 </div>
                 
-                <div class="overflow-x-auto">
-                    <div class="min-w-[820px] rounded-xl border border-gray-200 overflow-hidden shadow-sm">
-                        
-                        <!-- Updated header with better column proportions -->
-                        <div class="grid grid-cols-[1.15fr_0.9fr_1fr_1.75fr_1.2fr] gap-4 bg-gradient-to-r from-indigo-50 to-purple-50 border-b border-gray-200 text-sm font-extrabold text-indigo-900 uppercase tracking-wider px-6 py-4">
-                            <div>Day</div>
-                            <div>Date</div>
-                            <div>Time</div>
-                            <div>Course</div>
-                            <div>Group</div>
-                        </div>
-
-                        <div id="dashboardList" class="divide-y divide-gray-100 bg-white">
-                        </div>
-                        
-                    </div>
+                <div class="table-wrapper">
+                    <table id="scheduleTable" class="schedule-table w-full border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+                        <colgroup>
+                            <col>
+                            <col>
+                            <col>
+                            <col>
+                            <col>
+                        </colgroup>
+                        <thead>
+                            <tr class="bg-gradient-to-r from-indigo-50 to-purple-50 text-sm font-bold text-indigo-900 uppercase tracking-wider">
+                                <th class="text-left px-6 py-5 border-b">Day</th>
+                                <th class="text-left px-6 py-5 border-b">Date</th>
+                                <th class="text-left px-6 py-5 border-b">Time</th>
+                                <th class="text-left px-6 py-5 border-b">Course</th>
+                                <th class="text-left px-6 py-5 border-b">Group</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dashboardBody" class="divide-y divide-gray-100 bg-white text-sm">
+                        </tbody>
+                    </table>
                 </div>
 
-                <div id="emptyState" class="text-center py-16 text-gray-400">
+                <div id="emptyState" class="text-center py-20 text-gray-400">
                     <svg class="w-16 h-16 mx-auto mb-4 text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
-                    <p class="text-lg">No classes added yet.</p>
-                    <p class="text-sm">Fill out the form above to build your schedule.</p>
+                    <p class="text-lg font-medium">No classes yet</p>
+                    <p class="text-sm">Add entries above – supports any date/time format</p>
                 </div>
 
             </div>
@@ -161,137 +176,101 @@
     </div>
 
     <script>
-        // 1. Format 24hr time to AM/PM easily
-        function formatAMPM(timeStr) {
-            let [hours, minutes] = timeStr.split(':');
-            let ampm = hours >= 12 ? 'PM' : 'AM';
-            hours = hours % 12;
-            hours = hours ? hours : 12; 
-            return `\( {hours}: \){minutes} ${ampm}`;
-        }
-
-        // 2. Set up IndexedDB
         let db;
         const request = indexedDB.open("ScheduleDashboardDB", 1);
 
-        request.onupgradeneeded = function(event) {
-            db = event.target.result;
+        request.onupgradeneeded = function(e) {
+            db = e.target.result;
             if (!db.objectStoreNames.contains("schedules")) {
                 db.createObjectStore("schedules", { keyPath: "id", autoIncrement: true });
             }
         };
 
-        request.onsuccess = function(event) {
-            db = event.target.result;
-            loadDashboard(); 
+        request.onsuccess = function(e) {
+            db = e.target.result;
+            loadDashboard();
         };
 
-        request.onerror = function(event) {
-            console.error("IndexedDB Error: ", event.target.errorCode);
-        };
-
-        // 3. Handle Form Submit
         document.getElementById('scheduleForm').addEventListener('submit', function(e) {
             e.preventDefault();
 
             const newItem = {
-                day: document.getElementById('day').value,
-                date: document.getElementById('date').value,
-                time: formatAMPM(document.getElementById('hour').value),
-                course: document.getElementById('course').value,
-                group: document.getElementById('groupName').value
+                day: document.getElementById('day').value.trim(),
+                date: document.getElementById('date').value.trim(),
+                time: document.getElementById('hour').value.trim(),   // FREE TEXT – any format user wants
+                course: document.getElementById('course').value.trim(),
+                group: document.getElementById('groupName').value.trim()
             };
 
-            const transaction = db.transaction(["schedules"], "readwrite");
-            const store = transaction.objectStore("schedules");
-            
-            const addRequest = store.add(newItem);
-
-            addRequest.onsuccess = function() {
+            const tx = db.transaction(["schedules"], "readwrite");
+            tx.objectStore("schedules").add(newItem).onsuccess = () => {
                 document.getElementById('scheduleForm').reset();
-                loadDashboard(); 
+                loadDashboard();
             };
         });
 
-        // 4. Load Data & Render Rows (updated grid + pdf-row class)
         function loadDashboard() {
-            const listContainer = document.getElementById('dashboardList');
-            const emptyState = document.getElementById('emptyState');
-            
-            const transaction = db.transaction(["schedules"], "readonly");
-            const store = transaction.objectStore("schedules");
-            const getRequest = store.getAll();
+            const tbody = document.getElementById('dashboardBody');
+            const empty = document.getElementById('emptyState');
+            const table = document.getElementById('scheduleTable');
 
-            getRequest.onsuccess = function() {
-                const data = getRequest.result;
-                listContainer.innerHTML = ''; 
-                
+            const tx = db.transaction(["schedules"], "readonly");
+            tx.objectStore("schedules").getAll().onsuccess = function(e) {
+                const data = e.target.result;
+                tbody.innerHTML = '';
+
                 if (data.length === 0) {
-                    emptyState.style.display = 'block';
-                    listContainer.parentElement.style.display = 'none';
+                    empty.style.display = 'block';
+                    table.style.display = 'none';
                 } else {
-                    emptyState.style.display = 'none';
-                    listContainer.parentElement.style.display = 'block';
-                    
-                    data.forEach((item) => {
-                        const row = document.createElement('div');
-                        row.className = `grid grid-cols-[1.15fr_0.9fr_1fr_1.75fr_1.2fr] gap-4 items-center px-6 py-4 hover:bg-gray-50 transition-colors pdf-row`;
-                        
-                        row.innerHTML = `
-                            <div class="font-bold text-indigo-600">${item.day}</div>
-                            <div class="text-gray-700 font-medium">${item.date}</div>
-                            <div class="text-gray-700 font-medium">${item.time}</div>
-                            <div class="font-bold text-gray-800">${item.course}</div>
-                            <div>
-                                <span class="bg-purple-100 text-purple-700 py-1.5 px-3 rounded-md text-xs font-bold uppercase tracking-wide border border-purple-200 shadow-sm">
+                    empty.style.display = 'none';
+                    table.style.display = 'table';
+
+                    data.forEach(item => {
+                        const tr = document.createElement('tr');
+                        tr.className = 'hover:bg-gray-50 transition-colors';
+                        tr.innerHTML = `
+                            <td class="px-6 py-5 font-semibold text-indigo-700">${item.day}</td>
+                            <td class="px-6 py-5 font-medium text-gray-700">${item.date}</td>
+                            <td class="px-6 py-5 font-medium text-gray-700">${item.time}</td>
+                            <td class="px-6 py-5 font-semibold text-gray-800">${item.course}</td>
+                            <td class="px-6 py-5">
+                                <span class="bg-purple-100 text-purple-700 text-xs font-bold px-4 py-2 rounded-full border border-purple-200 shadow-sm">
                                     ${item.group}
                                 </span>
-                            </div>
+                            </td>
                         `;
-                        listContainer.appendChild(row);
+                        tbody.appendChild(tr);
                     });
                 }
             };
         }
 
-        // 5. UPDATED PDF Generation (no more squished text!)
         function downloadPDF() {
-            let filename = prompt("Enter a name for your PDF file:", "My-Class-Schedule");
-            
-            if (filename === null) return; 
-            if (filename.trim() === "") filename = "Class-Schedule"; 
-            
+            let filename = prompt("PDF filename:", "My-Class-Schedule");
+            if (filename === null) return;
+            if (!filename.trim()) filename = "Class-Schedule";
+
             const element = document.getElementById('pdf-container');
-            
-            // Save original styles
-            const originalClass = element.className;
-            
-            // Activate PDF mode (fixed width + perfect column ratios)
-            element.classList.add('pdf-mode');
+            element.classList.add('pdf-mode');   // Activate perfect A4 layout
 
             const opt = {
-                margin:       [15, 15, 15, 15],   // mm - clean professional margins
-                filename:     `${filename}.pdf`,
-                image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { 
-                    scale: 3,                     // Higher quality = sharp text
+                margin: [15, 15, 15, 15],
+                filename: `${filename}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { 
+                    scale: 3, 
                     useCORS: true,
-                    width: 794,                   // Force A4 width
-                    windowWidth: 850,
+                    width: 780,
                     scrollX: 0,
                     scrollY: 0,
                     backgroundColor: '#ffffff'
                 },
-                jsPDF:        { 
-                    unit: 'mm', 
-                    format: 'a4', 
-                    orientation: 'portrait' 
-                }
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
 
             html2pdf().set(opt).from(element).save().then(() => {
-                // Restore original styles
-                element.classList.remove('pdf-mode');
+                element.classList.remove('pdf-mode');   // Restore normal view
             });
         }
     </script>
