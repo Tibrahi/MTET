@@ -45,6 +45,9 @@
         .status-done { text-decoration: line-through; color: #16a34a; }
         .status-redo { color: #ea580c; font-weight: 600; }
         .status-pending { color: #64748b; }
+
+        .pdf-mode select { display: none !important; }
+        .pdf-mode .status-container { justify-content: flex-start !important; }
     </style>
 </head>
 <body class="bg-gradient-to-br from-indigo-50 to-purple-100 min-h-screen text-gray-800 font-sans p-4 md:p-10">
@@ -171,7 +174,7 @@
             hours = hours ? hours : 12;
             
             // Pure string concatenation - impossible to show as literal text
-            return hours + ':' + minutes + ' ' + ampm;
+            return hours + ':' + (minutes.length === 1 ? '0' + minutes : minutes) + ' ' + ampm;
         }
 
         // Nice date
@@ -311,7 +314,7 @@
                         '<td class="px-6 py-5 font-semibold text-gray-800">' + item.course + '</td>' +
                         '<td class="px-6 py-5 font-medium text-gray-700">' + item.group + '</td>' +
                         '<td class="px-6 py-5">' +
-                            '<div class="flex items-center gap-2">' +
+                            '<div class="status-container flex items-center gap-2">' +
                                 getStatusHTML(item.status) +
                                 '<select onchange="updateStatus(' + item.id + ', this.value)" class="text-xs bg-white border border-gray-300 rounded-lg px-2 py-1">' +
                                     '<option value="Pending" ' + (item.status==='Pending'?'selected':'') + '>Pending</option>' +
