@@ -8,7 +8,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
-    <!-- PERFECT PDF FIX - no squishing, full visibility -->
     <style>
         body { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
         
@@ -36,7 +35,6 @@
             white-space: normal !important;
         }
         
-        /* Balanced columns - Course gets most space */
         .pdf-mode .schedule-table col:nth-child(1) { width: 15%; }
         .pdf-mode .schedule-table col:nth-child(2) { width: 16%; }
         .pdf-mode .schedule-table col:nth-child(3) { width: 15%; }
@@ -52,7 +50,7 @@
             <h1 class="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-indigo-600">
                 Course Dashboard
             </h1>
-            <p class="text-gray-500">Calendar + Clock Picker • Time & Date shown in normal readable format</p>
+            <p class="text-gray-500">Calendar + Clock Picker • Clean readable time</p>
         </div>
 
         <div class="bg-white/80 backdrop-blur-md shadow-xl rounded-3xl p-8">
@@ -105,7 +103,7 @@
             <div id="pdf-container" class="bg-white p-10">
                 <div class="text-center mb-8 pb-6 border-b border-gray-100">
                     <h2 class="text-3xl font-bold text-gray-800">Your Class Schedule</h2>
-                    <p class="text-sm text-gray-500 mt-1">All times & dates shown in normal readable language</p>
+                    <p class="text-sm text-gray-500 mt-1">Time shown exactly as you picked from the clock</p>
                 </div>
                 
                 <table id="scheduleTable" class="schedule-table w-full border border-gray-100 rounded-2xl overflow-hidden">
@@ -134,28 +132,27 @@
     </div>
 
     <script>
-        // FIXED: Bulletproof readable time (always shows "3:20 PM", never code format)
+        // SUPER CLEAN & BULLETPROOF time formatter (NO MORE {hours} garbage)
         function formatTime(timeStr) {
             if (!timeStr || !timeStr.includes(':')) return timeStr || '—';
             
-            let [hoursStr, minutes] = timeStr.split(':');
+            const [hoursStr, minutes] = timeStr.split(':');
             let hours = parseInt(hoursStr, 10);
             
             if (isNaN(hours)) return timeStr;
             
             const ampm = hours >= 12 ? 'PM' : 'AM';
             hours = hours % 12;
-            hours = hours ? hours : 12;   // 0 becomes 12
+            hours = hours ? hours : 12;   // 0 or 12 becomes 12
             
-            return `\( {hours}: \){minutes} ${ampm}`;
+            return hours + ':' + minutes + ' ' + ampm;
         }
 
-        // Nice readable date (20 Mar 2026 instead of 2026-03-20)
+        // Nice readable date (20 Mar 2026)
         function formatDate(isoDate) {
             if (!isoDate) return '';
             const date = new Date(isoDate);
             if (isNaN(date.getTime())) return isoDate;
-            
             return date.toLocaleDateString('en-GB', {
                 day: 'numeric',
                 month: 'short',
@@ -183,8 +180,8 @@
 
             const newItem = {
                 day: document.getElementById('day').value.trim(),
-                date: document.getElementById('date').value,           // stored as YYYY-MM-DD
-                time: formatTime(document.getElementById('hour').value), // saved already formatted
+                date: document.getElementById('date').value,
+                time: formatTime(document.getElementById('hour').value),   // ALWAYS clean readable time
                 course: document.getElementById('course').value.trim(),
                 group: document.getElementById('groupName').value.trim()
             };
