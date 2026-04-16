@@ -7,6 +7,8 @@
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
     <style>
         body { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
@@ -124,34 +126,35 @@
             </button>
         </div>
 
-        <div class="bg-white shadow-2xl rounded-3xl overflow-hidden">
-            <div id="pdf-container" class="bg-white p-10">
-                <div class="text-center mb-10 pb-8 border-b border-gray-100">
-                    <h2 id="pdfHeader" class="text-3xl font-bold text-gray-800">Your Exam Schedule</h2>
-                    <p class="text-sm text-gray-500 mt-2">User-editable • Mid/Final Exam Timetable</p>
+        <div class="bg-white shadow-xl rounded-2xl overflow-hidden">
+            <div id="pdf-container" class="bg-white p-6 md:p-10">
+                
+                <div class="text-center mb-8 pb-4 border-b-2 border-indigo-50">
+                    <h2 class="text-3xl font-bold text-gray-800">Your Class Schedule</h2>
+                    <p class="text-sm text-gray-500 mt-2">Generated dynamically via Course Dashboard</p>
                 </div>
                 
-                <table id="scheduleTable" class="schedule-table w-full border border-gray-100 rounded-2xl overflow-hidden">
-                    <colgroup>
-                        <col><col><col><col><col><col>
-                    </colgroup>
-                    <thead>
-                        <tr class="bg-gradient-to-r from-indigo-50 to-purple-50 text-xs font-bold text-indigo-900 uppercase tracking-widest">
-                            <th class="text-left px-6 py-5">Day</th>
-                            <th class="text-left px-6 py-5">Date</th>
-                            <th class="text-left px-6 py-5">Time</th>
-                            <th class="text-left px-6 py-5">Course / Subject</th>
-                            <th class="text-left px-6 py-5">Group / Room</th>
-                            <th class="text-left px-6 py-5">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody id="dashboardBody" class="divide-y divide-gray-100 text-sm">
-                    </tbody>
-                </table>
+                <div class="overflow-x-auto">
+                    <div class="min-w-[750px] rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+                        
+                        <div class="grid grid-cols-5 gap-4 bg-gradient-to-r from-indigo-50 to-purple-50 border-b border-gray-200 text-sm font-extrabold text-indigo-900 uppercase tracking-wider px-6 py-4">
+                            <div>Day</div>
+                            <div>Date</div>
+                            <div>Time</div>
+                            <div>Course</div>
+                            <div>Group</div>
+                        </div>
 
-                <div id="emptyState" class="text-center py-20 text-gray-400">
-                    <p class="text-lg">No exams added yet</p>
-                    <p class="text-sm mt-1">Fill the form above</p>
+                        <div id="dashboardList" class="divide-y divide-gray-100 bg-white">
+                            </div>
+                        
+                    </div>
+                </div>
+
+                <div id="emptyState" class="text-center py-16 text-gray-400">
+                    <svg class="w-16 h-16 mx-auto mb-4 text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                    <p class="text-lg">No classes added yet.</p>
+                    <p class="text-sm">Fill out the form above to build your schedule.</p>
                 </div>
             </div>
         </div>
@@ -297,95 +300,61 @@
                 tbody.innerHTML = '';
 
                 if (data.length === 0) {
-                    empty.style.display = 'block';
-                    table.style.display = 'none';
-                    return;
-                }
-
-                empty.style.display = 'none';
-                table.style.display = 'table';
-
-                data.forEach(function(item) {
-                    var tr = document.createElement('tr');
-                    tr.className = 'hover:bg-gray-50 transition-colors';
-                    tr.innerHTML = 
-                        '<td class="px-6 py-5 font-semibold text-indigo-700">' + item.day + '</td>' +
-                        '<td class="px-6 py-5 font-medium text-gray-700">' + formatDate(item.date) + '</td>' +
-                        '<td class="px-6 py-5 font-medium text-gray-700">' + item.time + '</td>' +
-                        '<td class="px-6 py-5 font-semibold text-gray-800">' + item.course + '</td>' +
-                        '<td class="px-6 py-5 font-medium text-gray-700">' + item.group + '</td>' +
-                        '<td class="px-6 py-5">' +
-                            '<div class="status-container flex items-center gap-2">' +
-                                getStatusHTML(item.status) +
-                                '<select onchange="updateStatus(' + item.id + ', this.value)" class="text-xs bg-white border border-gray-300 rounded-lg px-2 py-1">' +
-                                    '<option value="Pending" ' + (item.status==='Pending'?'selected':'') + '>Pending</option>' +
-                                    '<option value="Done" ' + (item.status==='Done'?'selected':'') + '>Done</option>' +
-                                    '<option value="Redo" ' + (item.status==='Redo'?'selected':'') + '>Redo</option>' +
-                                '</select>' +
-                            '</div>' +
-                        '</td>';
-                    tbody.appendChild(tr);
-                });
-            };
-        }
-
-        function updateStatus(id, newStatus) {
-            var tx = db.transaction(["exams"], "readwrite");
-            var store = tx.objectStore("exams");
-            store.get(id).onsuccess = function(e) {
-                var item = e.target.result;
-                if (item) {
-                    item.status = newStatus;
-                    store.put(item);
-                    loadDashboard();
+                    emptyState.style.display = 'block';
+                    listContainer.parentElement.style.display = 'none'; // Hide table wrapper if empty
+                } else {
+                    emptyState.style.display = 'none';
+                    listContainer.parentElement.style.display = 'block'; // Show table wrapper
+                    
+                    data.forEach((item) => {
+                        const row = document.createElement('div');
+                        // No animations here so the PDF captures it perfectly instantly
+                        row.className = `grid grid-cols-5 gap-4 items-center px-6 py-4 hover:bg-gray-50 transition-colors`;
+                        
+                        row.innerHTML = `
+                            <div class="font-bold text-indigo-600">${item.day}</div>
+                            <div class="text-gray-700 font-medium">${item.date}</div>
+                            <div class="text-gray-700 font-medium">${item.time}</div>
+                            <div class="font-bold text-gray-800">${item.course}</div>
+                            <div>
+                                <span class="bg-purple-100 text-purple-700 py-1.5 px-3 rounded-md text-xs font-bold uppercase tracking-wide border border-purple-200 shadow-sm">
+                                    ${item.group}
+                                </span>
+                            </div>
+                        `;
+                        listContainer.appendChild(row);
+                    });
                 }
             };
         }
 
-        function clearAllData() {
-            if (!confirm("Clear ALL data and reset to defaults?")) return;
-            
-            var tx = db.transaction(["exams", "config"], "readwrite");
-            tx.objectStore("exams").clear();
-            tx.objectStore("config").put({ 
-                id: "settings", 
-                timetableTitle: "Your Exam Schedule", 
-                examType: "Mid Semester Exam" 
-            });
-            
-            tx.oncomplete = function() {
-                document.getElementById("mainTitle").textContent = "Your Exam Schedule";
-                document.getElementById("pdfHeader").textContent = "Your Exam Schedule";
-                document.getElementById("examType").value = "Mid Semester Exam";
-                loadDashboard();
-            };
-        }
-
+        // 5. PDF Generation Logic (Optimized for exact page fitting)
         function downloadPDF() {
-            var filename = prompt("PDF filename:", "Exam-Timetable");
-            if (filename === null || filename.trim() === "") filename = "Exam-Timetable";
-
-            var element = document.getElementById('pdf-container');
-            element.classList.add('pdf-mode');
-
-            var opt = {
-                margin: [22, 22, 22, 22],
-                filename: filename + '.pdf',
-                image: { type: 'jpeg', quality: 0.99 },
-                html2canvas: { 
-                    scale: 3.5, 
+            let filename = prompt("Enter a name for your PDF file:", "My-Schedule");
+            
+            if (filename === null) return; 
+            if (filename.trim() === "") filename = "Class-Schedule"; 
+            
+            const element = document.getElementById('pdf-container');
+            
+            // Configuration optimized for perfect A4 fitting and crisp text
+            const opt = {
+                margin:       [0.5, 0.5, 0.5, 0.5], // Top, Left, Bottom, Right
+                filename:     `${filename}.pdf`,
+                image:        { type: 'jpeg', quality: 1 },
+                html2canvas:  { 
+                    scale: 2, 
                     useCORS: true,
-                    width: 860,
-                    scrollX: 0,
-                    scrollY: 0,
-                    backgroundColor: '#ffffff'
+                    windowWidth: 1024 // Forces Tailwind to render the 5 columns before capturing
                 },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                jsPDF:        { 
+                    unit: 'in', 
+                    format: 'a4', 
+                    orientation: 'portrait' 
+                }
             };
 
-            html2pdf().set(opt).from(element).save().then(function() {
-                element.classList.remove('pdf-mode');
-            });
+            html2pdf().set(opt).from(element).save();
         }
     </script>
 </body>
