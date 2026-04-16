@@ -3,324 +3,227 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Exam Timetable Dashboard</title>
+    <title>Animated Class Dashboard</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
-    <style>
-        body { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        
-        #pdf-container.pdf-mode {
-            width: 860px !important;
-            max-width: 860px !important;
-            padding: 55px 48px !important;
-            margin: 0 auto !important;
-            box-shadow: none !important;
-            overflow: visible !important;
-            background: white !important;
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    animation: {
+                        'fade-in-down': 'fadeInDown 0.6s ease-out',
+                        'slide-up': 'slideUp 0.4s ease-out forwards',
+                        'bounce-slight': 'bounceSlight 2s infinite',
+                    },
+                    keyframes: {
+                        fadeInDown: {
+                            '0%': { opacity: '0', transform: 'translateY(-20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        slideUp: {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        bounceSlight: {
+                            '0%, 100%': { transform: 'translateY(-5%)' },
+                            '50%': { transform: 'translateY(0)' },
+                        }
+                    }
+                }
+            }
         }
-        
-        .pdf-mode .schedule-table {
-            width: 100% !important;
-            table-layout: fixed !important;
-            border-collapse: collapse !important;
-        }
-        
-        .pdf-mode .schedule-table th,
-        .pdf-mode .schedule-table td {
-            padding: 19px 15px !important;
-            word-break: break-word !important;
-            overflow-wrap: break-word !important;
-            white-space: normal !important;
-        }
-        
-        .pdf-mode .schedule-table col:nth-child(1) { width: 14%; }
-        .pdf-mode .schedule-table col:nth-child(2) { width: 15%; }
-        .pdf-mode .schedule-table col:nth-child(3) { width: 14%; }
-        .pdf-mode .schedule-table col:nth-child(4) { width: 30%; }
-        .pdf-mode .schedule-table col:nth-child(5) { width: 13%; }
-        .pdf-mode .schedule-table col:nth-child(6) { width: 14%; }
-        
-        .status-done { text-decoration: line-through; color: #16a34a; }
-        .status-redo { color: #ea580c; font-weight: 600; }
-        .status-pending { color: #64748b; }
-
-        .pdf-mode select { display: none !important; }
-        .pdf-mode .status-container { justify-content: flex-start !important; }
-        .pdf-mode .schedule-table td span { white-space: nowrap !important; }
-    </style>
+    </script>
 </head>
 <body class="bg-gradient-to-br from-indigo-50 to-purple-100 min-h-screen text-gray-800 font-sans p-4 md:p-10">
 
-    <div class="max-w-6xl mx-auto space-y-8">
+    <div class="max-w-5xl mx-auto space-y-8">
         
-        <div class="text-center">
-            <div id="mainTitle" onclick="editTitle(this)" 
-                 class="inline-block text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-indigo-600 cursor-pointer hover:underline">
-                Exam Timetable Dashboard
-            </div>
-            <p class="text-gray-500 text-sm mt-1">Click title to edit • Saved automatically</p>
+        <div class="text-center animate-fade-in-down">
+            <h1 class="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-indigo-600 mb-2 drop-shadow-sm">
+                Course Dashboard
+            </h1>
+            <p class="text-gray-500">Manage your schedule with style</p>
         </div>
 
-        <div class="flex justify-center">
-            <div class="bg-white rounded-3xl shadow px-8 py-3 flex items-center gap-4">
-                <span class="font-semibold text-gray-600">Exam Type:</span>
-                <select id="examType" onchange="saveExamType()" 
-                        class="bg-transparent font-medium text-lg px-4 py-2 rounded-2xl border border-gray-200 focus:border-purple-500 outline-none">
-                    <option value="Mid Semester Exam">Mid Semester Exam</option>
-                    <option value="Final Exam">Final Exam</option>
-                </select>
-            </div>
-        </div>
-
-        <div class="bg-white/80 backdrop-blur-md shadow-xl rounded-3xl p-8">
+        <div class="bg-white/80 backdrop-blur-md shadow-xl rounded-2xl p-6 md:p-8 animate-fade-in-down transition-all duration-300 hover:shadow-2xl">
             <form id="scheduleForm" class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div>
-                    <label class="block text-sm font-semibold text-gray-600 mb-1">Day Name</label>
+                
+                <div class="group">
+                    <label class="block text-sm font-semibold text-gray-600 mb-1 group-focus-within:text-purple-500 transition-colors">Day Name</label>
                     <input type="text" id="day" placeholder="e.g., Monday" required
-                        class="w-full px-4 py-3 rounded-2xl border border-gray-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-200 outline-none">
+                        class="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-200 transition-all duration-300 outline-none transform focus:-translate-y-1">
                 </div>
-                <div>
-                    <label class="block text-sm font-semibold text-gray-600 mb-1">Date</label>
-                    <input type="date" id="date" required
-                        class="w-full px-4 py-3 rounded-2xl border border-gray-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-200 outline-none">
+
+                <div class="group">
+                    <label class="block text-sm font-semibold text-gray-600 mb-1 group-focus-within:text-purple-500 transition-colors">Date (DD-MM)</label>
+                    <input type="text" id="date" placeholder="e.g., 25-10" required pattern="\d{2}-\d{2}" title="Format: DD-MM"
+                        class="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-200 transition-all duration-300 outline-none transform focus:-translate-y-1">
                 </div>
-                <div>
-                    <label class="block text-sm font-semibold text-gray-600 mb-1">Time (clock picker)</label>
+
+                <div class="group">
+                    <label class="block text-sm font-semibold text-gray-600 mb-1 group-focus-within:text-purple-500 transition-colors">Time (AM/PM)</label>
                     <input type="time" id="hour" required
-                        class="w-full px-4 py-3 rounded-2xl border border-gray-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-200 outline-none">
+                        class="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-200 transition-all duration-300 outline-none transform focus:-translate-y-1">
                 </div>
-                <div>
-                    <label class="block text-sm font-semibold text-gray-600 mb-1">Course / Subject</label>
-                    <input type="text" id="course" placeholder="e.g., Applied Mathematics" required
-                        class="w-full px-4 py-3 rounded-2xl border border-gray-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-200 outline-none">
+
+                <div class="group">
+                    <label class="block text-sm font-semibold text-gray-600 mb-1 group-focus-within:text-purple-500 transition-colors">Course</label>
+                    <input type="text" id="course" placeholder="e.g., Mathematics" required
+                        class="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-200 transition-all duration-300 outline-none transform focus:-translate-y-1">
                 </div>
-                <div>
-                    <label class="block text-sm font-semibold text-gray-600 mb-1">Group / Room</label>
-                    <input type="text" id="groupName" placeholder="e.g., Group G • Room 205" required
-                        class="w-full px-4 py-3 rounded-2xl border border-gray-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-200 outline-none">
+
+                <div class="group">
+                    <label class="block text-sm font-semibold text-gray-600 mb-1 group-focus-within:text-purple-500 transition-colors">Group</label>
+                    <input type="text" id="groupName" placeholder="e.g., Group A" required
+                        class="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-200 transition-all duration-300 outline-none transform focus:-translate-y-1">
                 </div>
-                <div class="flex items-end">
+
+                <div class="flex items-end md:col-span-1">
                     <button type="submit" 
-                        class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold py-3.5 rounded-2xl shadow-lg hover:shadow-purple-500/50 transform hover:-translate-y-1 transition-all">
-                        Add to Timetable →
+                        class="w-full bg-gradient-to-r from-purple-500 to-indigo-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:shadow-purple-500/50 transform hover:-translate-y-1 hover:scale-[1.02] active:scale-95 transition-all duration-300">
+                        Add to Dashboard ✦
                     </button>
                 </div>
             </form>
         </div>
 
-        <div class="flex justify-end gap-3">
-            <button onclick="clearAllData()" 
-                class="bg-red-100 hover:bg-red-200 text-red-700 font-medium py-2.5 px-6 rounded-2xl transition-all">
-                Clear All Data
-            </button>
+        <div class="flex justify-end animate-fade-in-down" style="animation-delay: 0.2s;">
             <button onclick="downloadPDF()" 
-                class="bg-gray-900 hover:bg-black text-white font-semibold py-3 px-8 rounded-2xl shadow flex items-center gap-2 transition-all">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v-4m0 0l4 4m-4-4l4-4m12 0v4m0 0l-4-4m4 4l-4 4" />
-                </svg>
-                Download Perfect PDF
+                class="bg-gray-800 text-white font-semibold py-2 px-6 rounded-full shadow-md hover:bg-black transform hover:-translate-y-1 active:scale-95 transition-all duration-300 flex items-center gap-2">
+                <svg class="w-5 h-5 animate-bounce-slight" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                Download PDF
             </button>
         </div>
 
         <div class="bg-white shadow-xl rounded-2xl overflow-hidden">
-            <div id="pdf-container" class="bg-white p-6 md:p-10">
+            <div id="pdf-container" class="bg-white p-8">
                 
-                <div class="text-center mb-8 pb-4 border-b-2 border-indigo-50">
-                    <h2 class="text-3xl font-bold text-gray-800">Your Class Schedule</h2>
-                    <p class="text-sm text-gray-500 mt-2">Generated dynamically via Course Dashboard</p>
+                <div class="text-center mb-6 pb-4 border-b-2 border-indigo-200">
+                    <h2 class="text-2xl font-bold text-gray-800">Your Class Schedule</h2>
+                    <p class="text-xs text-gray-600 mt-2">Generated dynamically via Course Dashboard</p>
                 </div>
                 
                 <div class="overflow-x-auto">
-                    <div class="min-w-[750px] rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+                    <table class="w-full border-collapse rounded-lg border border-gray-300 overflow-hidden shadow-sm">
                         
-                        <div class="grid grid-cols-5 gap-4 bg-gradient-to-r from-indigo-50 to-purple-50 border-b border-gray-200 text-sm font-extrabold text-indigo-900 uppercase tracking-wider px-6 py-4">
-                            <div>Day</div>
-                            <div>Date</div>
-                            <div>Time</div>
-                            <div>Course</div>
-                            <div>Group</div>
-                        </div>
+                        <thead>
+                            <tr class="bg-gradient-to-r from-indigo-100 to-purple-100 border-b-2 border-gray-300">
+                                <th class="border border-gray-300 text-left font-extrabold text-indigo-900 uppercase tracking-wider px-4 py-3">Day</th>
+                                <th class="border border-gray-300 text-left font-extrabold text-indigo-900 uppercase tracking-wider px-4 py-3">Date</th>
+                                <th class="border border-gray-300 text-left font-extrabold text-indigo-900 uppercase tracking-wider px-4 py-3">Time</th>
+                                <th class="border border-gray-300 text-left font-extrabold text-indigo-900 uppercase tracking-wider px-4 py-3">Course</th>
+                                <th class="border border-gray-300 text-left font-extrabold text-indigo-900 uppercase tracking-wider px-4 py-3">Group</th>
+                            </tr>
+                        </thead>
 
-                        <div id="dashboardList" class="divide-y divide-gray-100 bg-white">
-                            </div>
+                        <tbody id="dashboardList" class="divide-y divide-gray-200 bg-white">
+                        </tbody>
                         
-                    </div>
+                    </table>
                 </div>
 
-                <div id="emptyState" class="text-center py-16 text-gray-400">
+                <div id="emptyState" class="text-center py-12 text-gray-400">
                     <svg class="w-16 h-16 mx-auto mb-4 text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
                     <p class="text-lg">No classes added yet.</p>
                     <p class="text-sm">Fill out the form above to build your schedule.</p>
                 </div>
+
             </div>
         </div>
+
     </div>
 
     <script>
-        // ULTRA SAFE time formatter (NO template literals - only + concatenation)
-        // This completely fixes the "( {h}: ){min} AM" garbage issue
-        function formatTime(timeStr) {
-            if (!timeStr || timeStr.indexOf(':') === -1) return timeStr || '—';
-            
-            var parts = timeStr.split(':');
-            var hoursStr = parts[0];
-            var minutes = parts[1];
-            
-            var hours = parseInt(hoursStr, 10);
-            if (isNaN(hours)) return timeStr;
-            
-            var ampm = hours >= 12 ? 'PM' : 'AM';
+        // 1. Format 24hr time to AM/PM easily
+        function formatAMPM(timeStr) {
+            let [hours, minutes] = timeStr.split(':');
+            let ampm = hours >= 12 ? 'PM' : 'AM';
             hours = hours % 12;
-            hours = hours ? hours : 12;
-            
-            // Pure string concatenation - impossible to show as literal text
-            return hours + ':' + (minutes.length === 1 ? '0' + minutes : minutes) + ' ' + ampm;
+            hours = hours ? hours : 12; 
+            return `${hours}:${minutes} ${ampm}`;
         }
 
-        // Nice date
-        function formatDate(iso) {
-            if (!iso) return '';
-            var d = new Date(iso);
-            if (isNaN(d.getTime())) return iso;
-            return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
-        }
-
-        function getStatusHTML(status) {
-            if (status === 'Done') return '<span class="status-done inline-block bg-green-100 text-green-700 px-4 py-1 rounded-full text-xs font-bold">DONE ✓</span>';
-            if (status === 'Redo') return '<span class="status-redo inline-block bg-orange-100 text-orange-700 px-4 py-1 rounded-full text-xs font-bold">REDO !</span>';
-            return '<span class="status-pending inline-block bg-slate-100 text-slate-700 px-4 py-1 rounded-full text-xs font-bold">PENDING</span>';
-        }
-
+        // 2. Set up IndexedDB
         let db;
-        const dbName = "ExamTimetableDB";
-        const request = indexedDB.open(dbName, 2);
+        const request = indexedDB.open("ScheduleDashboardDB", 1);
 
-        request.onupgradeneeded = function(e) {
-            db = e.target.result;
-            if (!db.objectStoreNames.contains("exams")) {
-                db.createObjectStore("exams", { keyPath: "id", autoIncrement: true });
-            }
-            if (!db.objectStoreNames.contains("config")) {
-                var store = db.createObjectStore("config", { keyPath: "id" });
-                store.put({ id: "settings", timetableTitle: "Your Exam Schedule", examType: "Mid Semester Exam" });
+        request.onupgradeneeded = function(event) {
+            db = event.target.result;
+            if (!db.objectStoreNames.contains("schedules")) {
+                db.createObjectStore("schedules", { keyPath: "id", autoIncrement: true });
             }
         };
 
-        request.onsuccess = function() {
-            db = request.result;
-            loadConfig();
-            loadDashboard();
+        request.onsuccess = function(event) {
+            db = event.target.result;
+            loadDashboard(); 
         };
 
-        function loadConfig() {
-            db.transaction(["config"], "readonly").objectStore("config").get("settings").onsuccess = function(e) {
-                var settings = e.target.result || { timetableTitle: "Your Exam Schedule", examType: "Mid Semester Exam" };
-                document.getElementById("mainTitle").textContent = settings.timetableTitle;
-                document.getElementById("pdfHeader").textContent = settings.timetableTitle;
-                document.getElementById("examType").value = settings.examType;
-            };
-        }
+        request.onerror = function(event) {
+            console.error("IndexedDB Error: ", event.target.errorCode);
+        };
 
-        function saveConfig(title, examType) {
-            var tx = db.transaction(["config"], "readwrite");
-            tx.objectStore("config").put({ id: "settings", timetableTitle: title, examType: examType });
-        }
-
-        function editTitle(el) {
-            var current = el.textContent.trim();
-            var input = document.createElement("input");
-            input.value = current;
-            input.className = "text-4xl font-extrabold text-center bg-white border-2 border-purple-400 rounded-2xl px-6 py-2 outline-none w-full max-w-md mx-auto";
-            el.replaceWith(input);
-            input.focus();
-            input.select();
-
-            function save() {
-                var newTitle = input.value.trim();
-                if (!newTitle) newTitle = "Your Exam Schedule";
-                var newEl = document.createElement("div");
-                newEl.id = "mainTitle";
-                newEl.onclick = function() { editTitle(newEl); };
-                newEl.className = "inline-block text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-indigo-600 cursor-pointer hover:underline";
-                newEl.textContent = newTitle;
-                input.replaceWith(newEl);
-
-                var examType = document.getElementById("examType").value;
-                saveConfig(newTitle, examType);
-                document.getElementById("pdfHeader").textContent = newTitle;
-            }
-
-            input.onblur = save;
-            input.onkeydown = function(e) { if (e.key === "Enter") save(); };
-        }
-
-        function saveExamType() {
-            var titleEl = document.getElementById("mainTitle");
-            var newType = document.getElementById("examType").value;
-            var currentTitle = titleEl.textContent.trim();
-            saveConfig(currentTitle, newType);
-            document.getElementById("pdfHeader").textContent = currentTitle;
-        }
-
+        // 3. Handle Form Submit
         document.getElementById('scheduleForm').addEventListener('submit', function(e) {
             e.preventDefault();
 
-            var newItem = {
-                day: document.getElementById('day').value.trim(),
+            const newItem = {
+                day: document.getElementById('day').value,
                 date: document.getElementById('date').value,
-                time: formatTime(document.getElementById('hour').value),   // Always clean "1:00 PM"
-                course: document.getElementById('course').value.trim(),
-                group: document.getElementById('groupName').value.trim(),
-                status: "Pending"
+                time: formatAMPM(document.getElementById('hour').value),
+                course: document.getElementById('course').value,
+                group: document.getElementById('groupName').value
             };
 
-            db.transaction(["exams"], "readwrite")
-              .objectStore("exams")
-              .add(newItem)
-              .onsuccess = function() {
-                  document.getElementById('scheduleForm').reset();
-                  loadDashboard();
-              };
+            const transaction = db.transaction(["schedules"], "readwrite");
+            const store = transaction.objectStore("schedules");
+            
+            const addRequest = store.add(newItem);
+
+            addRequest.onsuccess = function() {
+                document.getElementById('scheduleForm').reset();
+                loadDashboard(); 
+            };
         });
 
+        // 4. Load Data & Render Rows
         function loadDashboard() {
-            var tbody = document.getElementById('dashboardBody');
-            var empty = document.getElementById('emptyState');
-            var table = document.getElementById('scheduleTable');
+            const listContainer = document.getElementById('dashboardList');
+            const emptyState = document.getElementById('emptyState');
+            
+            const transaction = db.transaction(["schedules"], "readonly");
+            const store = transaction.objectStore("schedules");
+            const getRequest = store.getAll();
 
-            db.transaction(["exams"], "readonly")
-              .objectStore("exams")
-              .getAll()
-              .onsuccess = function(e) {
-                var data = e.target.result || [];
-                tbody.innerHTML = '';
-
+            getRequest.onsuccess = function() {
+                const data = getRequest.result;
+                listContainer.innerHTML = ''; 
+                
                 if (data.length === 0) {
                     emptyState.style.display = 'block';
-                    listContainer.parentElement.style.display = 'none'; // Hide table wrapper if empty
+                    listContainer.parentElement.parentElement.style.display = 'none'; // Hide table if empty
                 } else {
                     emptyState.style.display = 'none';
-                    listContainer.parentElement.style.display = 'block'; // Show table wrapper
+                    listContainer.parentElement.parentElement.style.display = 'block'; // Show table
                     
                     data.forEach((item) => {
-                        const row = document.createElement('div');
-                        // No animations here so the PDF captures it perfectly instantly
-                        row.className = `grid grid-cols-5 gap-4 items-center px-6 py-4 hover:bg-gray-50 transition-colors`;
+                        const row = document.createElement('tr');
+                        row.className = `hover:bg-gray-50 transition-colors`;
                         
                         row.innerHTML = `
-                            <div class="font-bold text-indigo-600">${item.day}</div>
-                            <div class="text-gray-700 font-medium">${item.date}</div>
-                            <div class="text-gray-700 font-medium">${item.time}</div>
-                            <div class="font-bold text-gray-800">${item.course}</div>
-                            <div>
-                                <span class="bg-purple-100 text-purple-700 py-1.5 px-3 rounded-md text-xs font-bold uppercase tracking-wide border border-purple-200 shadow-sm">
+                            <td class="border border-gray-300 font-semibold text-indigo-600 px-4 py-3">${item.day}</td>
+                            <td class="border border-gray-300 text-gray-700 px-4 py-3">${item.date}</td>
+                            <td class="border border-gray-300 text-gray-700 px-4 py-3">${item.time}</td>
+                            <td class="border border-gray-300 font-semibold text-gray-800 px-4 py-3">${item.course}</td>
+                            <td class="border border-gray-300 px-4 py-3">
+                                <span class="bg-purple-100 text-purple-700 py-1 px-2 rounded text-xs font-bold uppercase tracking-wide border border-purple-300">
                                     ${item.group}
                                 </span>
-                            </div>
+                            </td>
                         `;
                         listContainer.appendChild(row);
                     });
@@ -328,7 +231,7 @@
             };
         }
 
-        // 5. PDF Generation Logic (Optimized for exact page fitting)
+        // 5. PDF Generation Logic - Proper A4 page fitting
         function downloadPDF() {
             let filename = prompt("Enter a name for your PDF file:", "My-Schedule");
             
@@ -337,24 +240,89 @@
             
             const element = document.getElementById('pdf-container');
             
-            // Configuration optimized for perfect A4 fitting and crisp text
-            const opt = {
-                margin:       [0.5, 0.5, 0.5, 0.5], // Top, Left, Bottom, Right
-                filename:     `${filename}.pdf`,
-                image:        { type: 'jpeg', quality: 1 },
-                html2canvas:  { 
-                    scale: 2, 
-                    useCORS: true,
-                    windowWidth: 1024 // Forces Tailwind to render the 5 columns before capturing
-                },
-                jsPDF:        { 
-                    unit: 'in', 
-                    format: 'a4', 
-                    orientation: 'portrait' 
+            // Create a clone for PDF to avoid modifying the original
+            const clonedElement = element.cloneNode(true);
+            clonedElement.style.width = '210mm'; // A4 width
+            clonedElement.style.padding = '10mm';
+            clonedElement.style.boxSizing = 'border-box';
+            clonedElement.style.margin = '0';
+            
+            // Hide the cloned element (append to body temporarily)
+            clonedElement.style.position = 'absolute';
+            clonedElement.style.left = '-9999px';
+            document.body.appendChild(clonedElement);
+            
+            // Generate canvas from the cloned element
+            html2canvas(clonedElement, {
+                scale: 2,
+                useCORS: true,
+                logging: false,
+                backgroundColor: '#ffffff',
+                windowWidth: 1000,
+                windowHeight: 1400
+            }).then(canvas => {
+                // Remove cloned element
+                document.body.removeChild(clonedElement);
+                
+                // Get canvas dimensions
+                const imgData = canvas.toDataURL('image/png');
+                
+                // A4 dimensions in mm
+                const pdfWidth = 210;  // A4 width in mm
+                const pdfHeight = 297; // A4 height in mm
+                const margin = 10;     // 10mm margins
+                const contentWidth = pdfWidth - (2 * margin);
+                const contentHeight = pdfHeight - (2 * margin);
+                
+                // Create PDF
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF({
+                    orientation: 'portrait',
+                    unit: 'mm',
+                    format: 'a4',
+                    compress: true
+                });
+                
+                // Calculate image dimensions to fit perfectly on page
+                const canvasHeight = canvas.height;
+                const canvasWidth = canvas.width;
+                const ratio = canvasWidth / canvasHeight;
+                
+                let imgWidth = contentWidth;
+                let imgHeight = imgWidth / ratio;
+                
+                // If image is too tall, scale it down
+                if (imgHeight > contentHeight) {
+                    imgHeight = contentHeight;
+                    imgWidth = imgHeight * ratio;
                 }
-            };
-
-            html2pdf().set(opt).from(element).save();
+                
+                // Center the image horizontally if needed
+                const xOffset = margin + (contentWidth - imgWidth) / 2;
+                const yOffset = margin;
+                
+                // Add image to PDF
+                pdf.addImage(imgData, 'PNG', xOffset, yOffset, imgWidth, imgHeight);
+                
+                // Add multiple pages if content is taller than one page
+                let yPosition = yOffset + imgHeight + 5;
+                
+                // Set document properties
+                pdf.setProperties({
+                    title: filename,
+                    subject: 'Class Schedule',
+                    author: 'Course Dashboard',
+                    keywords: 'schedule, timetable',
+                    creator: 'Course Dashboard Application'
+                });
+                
+                // Save the PDF
+                pdf.save(`${filename}.pdf`);
+                
+            }).catch(error => {
+                console.error('Error generating PDF:', error);
+                alert('Error generating PDF. Please try again.');
+            });
         }
     </script>
 </body>
